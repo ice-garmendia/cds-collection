@@ -1,0 +1,137 @@
+=============================================================
+  MY CD COLLECTION — RELEASE NOTES
+  https://ice-garmendia.github.io/cds-collection/
+=============================================================
+
+-------------------------------------------------------------
+v0.1 — Initial build
+Date: 2026-03-20
+-------------------------------------------------------------
+- First version of the app built from scratch with Claude
+- Imported 737 CDs from Google Sheets CSV
+- Grid and list views with search and filters
+- Add / Edit / Delete CDs
+- Persistent storage via browser session
+- Fields: Artist, Album, Year, Label, Category, Condition,
+  Estimated Value, Notes
+- Color-coded artist placeholders
+
+-------------------------------------------------------------
+v0.2 — GitHub photo integration
+Date: 2026-03-20
+-------------------------------------------------------------
+- Unique CD IDs assigned (CD-0001 to CD-0737) ordered by
+  value descending (most valuable = CD-0001)
+- Photo support via GitHub repo ice-garmendia/cds-collection
+- Folder structure: /photos/CD-XXXX/front.jpg, back.jpg, etc.
+- Carousel with front / back / disc / obi / insert support
+- Dot navigation and arrow buttons in carousel
+- Photo label overlay (Front, Back, Disc, OBI, Insert)
+- Cover indicator badge on cards
+
+-------------------------------------------------------------
+v0.3 — Statistics tab
+Date: 2026-03-20
+-------------------------------------------------------------
+- New Statistics tab with charts and KPIs
+- Bar charts: records by country, by artist, value by artist
+- Donut charts: Commercial vs Promo, by category
+- Artist × Category cross matrix table
+- 8 KPI cards: total records, total value, avg value,
+  most valuable, promos, variants, with photos, countries
+- Country field added to dataset (extracted from CSV)
+
+-------------------------------------------------------------
+v0.4 — CD Detail Popup
+Date: 2026-03-20
+-------------------------------------------------------------
+- Click any CD to open full-screen immersive popup
+- Blurred background using the CD's own photo
+- Artist color gradient overlay per artist
+- Large photo carousel with contain mode (full image visible)
+- All metadata displayed: ID, year, issue year, country,
+  label, type, presentation (Category Case), artwork condition
+- Estimated value highlighted in gold (admin only later)
+- Notes in italic with left border accent
+- Edit button directly from popup
+
+-------------------------------------------------------------
+v0.5 — Tree view navigation
+Date: 2026-03-20
+-------------------------------------------------------------
+- Collection tab replaced with accordion tree view
+- Hierarchy: Artist → Category → Title → Discs
+- CD3 and CD5 grouped under "Singles" category
+- Titles sorted by Original Year ascending
+- Discs sorted by Issue Year, then by country priority:
+  UK → Europe → Netherlands → Japan → USA → others
+- Original year shown in parentheses next to each title
+- Thumbnail preview on title rows (if photo available)
+- Disc rows show: ID, year, country, label, presentation,
+  Media/Artwork condition, Promo badge
+- Artist order: Queen, Freddie Mercury, Brian May,
+  Roger Taylor, The Cross, Smile, Queen+
+- Search bar filters across the entire tree
+
+-------------------------------------------------------------
+v0.6 — Bilingual support (EN / AR)
+Date: 2026-03-20
+-------------------------------------------------------------
+- Language selector in header: 🇬🇧 EN / 🇦🇷 ES
+- English set as default language
+- Full UI translation: tabs, filters, buttons, fields,
+  popup labels, stats, photo labels, modal forms
+- CD data (titles, notes, artist names) unchanged
+
+-------------------------------------------------------------
+v0.7 — Admin mode
+Date: 2026-03-20
+-------------------------------------------------------------
+- 🔒 lock button in header to toggle admin mode
+- Password protected with SHA-256 hash (not stored in plain text)
+- Admin-only features:
+  · "+ Add CD" button
+  · Edit / Delete buttons on cards
+  · All monetary values (estimated value, totals)
+  · Statistics tab (shows 🔒 when not admin)
+- Tree view hides all € values when not in admin mode
+- Lock icon turns green 🔓 when admin session is active
+- Click 🔓 to exit admin mode instantly
+
+-------------------------------------------------------------
+v0.8 — Data corrections + condition format fix
+Date: 2026-03-20
+-------------------------------------------------------------
+- CSV re-imported with corrected Issue Year and Original Year
+- Conditions now shown in original Discogs format:
+  NM, VG+, VG, VG-, G+, M (removed Spanish translation)
+- Media and Artwork conditions displayed as:
+  "Media: NM · Artwork: VG+" in disc rows
+- Category Case field added to dataset and popup
+  (Slim Case, Standard Jewel Case, Digipack, etc.)
+
+=============================================================
+  TECH STACK
+=============================================================
+- React 18 (UMD, no build step required)
+- Vanilla JS / HTML — single file deployment
+- GitHub Pages for hosting
+- GitHub repo for photo storage (raw.githubusercontent.com)
+- SHA-256 via Web Crypto API for admin password hashing
+- No backend, no database, no dependencies beyond React
+
+=============================================================
+  REPO STRUCTURE
+=============================================================
+cds-collection/
+├── index.html          ← The entire app
+├── RELEASE_NOTES.txt   ← This file
+└── photos/
+    ├── CD-0001/
+    │   ├── front.jpg
+    │   ├── back.jpg
+    │   └── cd.jpg
+    ├── CD-0002/
+    └── ...
+
+=============================================================
