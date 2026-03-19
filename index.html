@@ -545,7 +545,7 @@ function CDModal({cd,onSave,onClose}){
 
 // ── MAIN APP ──────────────────────────────────────────────
 function App(){
-  const [lang,setLang]=useState("es");
+  const [lang,setLang]=useState("en");
   // Update global t synchronously on every render
   t = T[lang];
   const [cds,setCds]=useState(ALL_CDS);
@@ -607,8 +607,8 @@ function App(){
           ),
           e("div",{style:{display:"flex",gap:8,alignItems:"center",marginTop:4}},
           e("select",{value:lang,onChange:ev=>setLang(ev.target.value),style:{background:"#10101c",border:"1px solid #2a2a3d",borderRadius:6,padding:"7px 10px",color:"#9090b0",fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",cursor:"pointer",outline:"none"}},
-            e("option",{value:"es"},"🌐 ES"),
-            e("option",{value:"en"},"🌐 EN")
+            e("option",{value:"en"},"🇬🇧 EN"),
+            e("option",{value:"es"},"🇦🇷 ES")
           ),
           activeTab==="collection"&&e("button",{onClick:()=>setModal("add"),style:{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:8,padding:"9px 16px",cursor:"pointer",fontSize:"0.75rem",fontWeight:600,letterSpacing:"0.05em",boxShadow:"0 4px 20px rgba(99,102,241,0.35)",whiteSpace:"nowrap"}},t.addCd)
         )
