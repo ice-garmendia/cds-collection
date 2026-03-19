@@ -47,8 +47,7 @@ const T = {
     promos:"promos",withPhotos:"with photos",totalValue:"total value",
     collection:"Collection",statistics:"Statistics",browse:"Browse",
     search:"Search artist, title, label, ID...",
-    allArtists:"All artists",allCats:"All categories",allConds:"All conditions",
-    allTypes:"Commercial + Promo",onlyComm:"Commercial only",onlyPromo:"Promo only",
+    allArtists:"All artists",allCats:"All categories",allTypes:"Commercial + Promo",onlyComm:"Commercial only",onlyPromo:"Promo only",
     sortArtist:"Artist A–Z",sortTitle:"Title A–Z",sortId:"ID (value ↓)",
     sortYear:"Original year",sortIssue:"Issue year",sortValue:"Value ↓",
     addCd:"+ Add CD",edit:"Edit",del:"Delete",cancel:"Cancel",save:"Save changes",add:"Add",
@@ -74,8 +73,7 @@ const T = {
     promos:"promos",withPhotos:"con fotos",totalValue:"valor total",
     collection:"Colección",statistics:"Estadísticas",browse:"Explorar",
     search:"Buscar artista, título, sello, ID...",
-    allArtists:"Todos los artistas",allCats:"Todas las categorías",allConds:"Todos los estados",
-    allTypes:"Commercial + Promo",onlyComm:"Solo Commercial",onlyPromo:"Solo Promo",
+    allArtists:"Todos los artistas",allCats:"Todas las categorías",allTypes:"Commercial + Promo",onlyComm:"Solo Commercial",onlyPromo:"Solo Promo",
     sortArtist:"Artista A–Z",sortTitle:"Título A–Z",sortId:"ID (valor ↓)",
     sortYear:"Año original",sortIssue:"Año edición",sortValue:"Valor ↓",
     addCd:"+ Agregar CD",edit:"Editar",del:"Eliminar",cancel:"Cancelar",save:"Guardar cambios",add:"Agregar",
@@ -483,9 +481,9 @@ function TreeView({cds,onSelect}){
                               borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},"PROMO")
                           ),
                           h("div",{style:{display:"flex",gap:8,alignItems:"center",flexShrink:0}},
-                            cd.condition&&h("span",{style:{fontSize:"0.58rem",background:cc+"22",
-                              border:`1px solid ${cc}44`,color:cc,padding:"1px 6px",
-                              borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},cd.condition),
+                            h("div",{style:{fontSize:"0.68rem",color:"#5a5a7a",fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap"}},
+                            [cd.condition?`Media: ${cd.condition}`:"", cd.artworkCondition?`Artwork: ${cd.artworkCondition}`:""].filter(Boolean).join(" · ")
+                          ),
                             cd.estimatedValue>0&&h("div",{style:{fontSize:"0.75rem",color:"#fbbf24",
                               fontFamily:"'DM Mono',monospace",fontWeight:600,minWidth:50,textAlign:"right"}},
                               `€${fmt(cd.estimatedValue)}`)
