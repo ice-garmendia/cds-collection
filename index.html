@@ -370,8 +370,17 @@ function TreeView({cds,onSelect}){
           return minA-minB;
         });
         titles.forEach(title=>{
+          const COUNTRY_ORDER=["UK","EUROPE","NETHERLANDS","HOLLAND","JAPAN","USA"];
+          const countryRank=c=>{
+            const idx=COUNTRY_ORDER.indexOf((c.country||"").toUpperCase());
+            return idx>=0?idx:COUNTRY_ORDER.length;
+          };
           out[artist][cat][title]=cCds.filter(c=>c.album===title)
-            .sort((a,b)=>(a.issueYear||0)-(b.issueYear||0));
+            .sort((a,b)=>{
+              const yearDiff=(a.issueYear||0)-(b.issueYear||0);
+              if(yearDiff!==0) return yearDiff;
+              return countryRank(a)-countryRank(b);
+            });
         });
       });
     });
