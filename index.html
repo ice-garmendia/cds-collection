@@ -209,7 +209,7 @@ function CDCard({cd,onEdit,onDelete,onSelect}){
         cd.genre&&h(Badge,{label:cd.genre,color:"#6366f1"}),
         cd.variety==="Variant"&&h(Badge,{label:"Variant",color:"#ec4899"})
       ),
-      cd.estimatedValue>0&&h("div",{style:{fontSize:"0.72rem",color:"#fbbf24",marginTop:5}},`€${fmt(cd.estimatedValue)}`),
+      cd.estimatedValue>0&&isAdmin&&h("div",{style:{fontSize:"0.72rem",color:"#fbbf24",marginTop:5}},`€${fmt(cd.estimatedValue)}`),
       hov&&isAdmin&&h("div",{style:{display:"flex",gap:6,marginTop:8}},
         h("button",{onClick:e=>{e.stopPropagation();onEdit(cd)},
           style:{flex:1,background:"#22223a",border:"1px solid #3a3a5a",color:"#9090c0",
@@ -248,7 +248,7 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
     h("div",{style:{fontSize:"0.7rem",color:"#5a5a7a"}},cd.year||"—"),
     h("div",{style:{fontSize:"0.68rem",color:"#4a4a6a"}},cd.genre),
     h(Badge,{label:cd.condition||"?",color:cc}),
-    h("div",{style:{fontSize:"0.72rem",color:"#fbbf24"}},cd.estimatedValue?`€${fmt(cd.estimatedValue)}`:"—"),
+    h("div",{style:{fontSize:"0.72rem",color:"#fbbf24"}},isAdmin&&cd.estimatedValue?`€${fmt(cd.estimatedValue)}`:"—"),
     h("div",{style:{display:"flex",gap:5}},
       h("button",{onClick:e=>{e.stopPropagation();onEdit(cd)},
         style:{background:"transparent",border:"1px solid #2a2a4a",color:"#5a5a8a",
@@ -324,7 +324,7 @@ function CDPopup({cd,onClose,onEdit}){
             ))
           ),
           h("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}},
-            cd.estimatedValue>0&&h("div",null,
+            cd.estimatedValue>0&&isAdmin&&h("div",null,
               h("div",{style:{fontSize:"0.52rem",color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}},t.estValue),
               h("div",{style:{fontSize:"1.5rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"#fbbf24",textShadow:"0 0 20px rgba(251,191,36,0.4)"}},`€${fmt(cd.estimatedValue)}`)
             ),
@@ -410,7 +410,7 @@ function TreeView({cds,onSelect}){
           h("div",{style:{flex:1}},
             h("div",{style:{fontSize:"0.9rem",fontWeight:700,color:"#e8e8f0",fontFamily:"'Playfair Display',serif"}},artist),
             h("div",{style:{fontSize:"0.62rem",color:"#5a5a7a",fontFamily:"'DM Mono',monospace",marginTop:2}},
-              `${aCds.length} ${t.records} · €${fmt(aVal)}`)
+              `${aCds.length} ${t.records}${isAdmin?" · €"+fmt(aVal):""}`)
           ),
           h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{fontSize:"0.6rem",color:c,fontFamily:"'DM Mono',monospace"}},
@@ -438,7 +438,7 @@ function TreeView({cds,onSelect}){
                   h("div",{style:{fontSize:"0.78rem",fontWeight:600,color:"#c0c0d8",
                     fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em"}},cat),
                   h("div",{style:{fontSize:"0.6rem",color:"#4a4a6a",marginTop:1}},
-                    `${cCds.length} ${t.records} · ${Object.keys(titles).length} ${t.titles} · €${fmt(cVal)}`)
+                    `${cCds.length} ${t.records} · ${Object.keys(titles).length} ${t.titles}${isAdmin?" · €"+fmt(cVal):""}`)
                 ),
                 h("span",{style:{color:"#3a3a5a",fontSize:"0.75rem",
                   transition:"transform 0.2s",transform:isCOpen?"rotate(90deg)":"rotate(0)"}},"›")
@@ -466,7 +466,7 @@ function TreeView({cds,onSelect}){
                       h("div",{style:{flex:1}},
                         h("div",{style:{fontSize:"0.8rem",fontWeight:600,color:"#d0d0e8",fontFamily:"'Playfair Display',serif"}},title+(discs[0]?.year>0?" ("+discs[0].year+")":"")),
                         h("div",{style:{fontSize:"0.6rem",color:"#4a4a6a",marginTop:1}},
-                          `${discs.length} ${discs.length===1?t.records.slice(0,-1):t.records} · €${fmt(tVal)}`)
+                          `${discs.length} ${discs.length===1?t.records.slice(0,-1):t.records}${isAdmin?" · €"+fmt(tVal):""}`)
                       ),
                       h("span",{style:{color:"#3a3a5a",fontSize:"0.7rem",
                         transition:"transform 0.2s",transform:isTOpen?"rotate(90deg)":"rotate(0)"}},"›")
@@ -502,7 +502,7 @@ function TreeView({cds,onSelect}){
                             cd.condition&&h("span",{style:{fontSize:"0.58rem",background:cc+"22",
                               border:`1px solid ${cc}44`,color:cc,padding:"1px 6px",
                               borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},cd.condition),
-                            cd.estimatedValue>0&&h("div",{style:{fontSize:"0.75rem",color:"#fbbf24",
+                            cd.estimatedValue>0&&isAdmin&&h("div",{style:{fontSize:"0.75rem",color:"#fbbf24",
                               fontFamily:"'DM Mono',monospace",fontWeight:600,minWidth:50,textAlign:"right"}},
                               `€${fmt(cd.estimatedValue)}`)
                           )
@@ -831,7 +831,7 @@ function App(){
                 [`${withPhotos}/${cds.length}`,t.withPhotos,"#4ade80"],
                 [`€${fmt(totVal)}`,t.totalValue,"#fbbf24"],
               ].map(([val,lbl,col])=>h("span",{key:lbl,style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"#3a3a5a"}},
-                h("span",{style:{color:col}},val)," ",lbl))
+                h("span",{style:{color:col}},lbl===t.totalValue&&!isAdmin?"—":val)," ",lbl))
             )
           ),
           h("div",{style:{display:"flex",gap:8,alignItems:"center",marginTop:4}},
@@ -874,7 +874,7 @@ function App(){
     // Content
     h("div",{style:{maxWidth:1500,margin:"0 auto",padding:"20px 24px"}},
       tab==="statistics"
-        ?h(StatsTab,{cds})
+        ?isAdmin?h(StatsTab,{cds}):h("div",{style:{textAlign:"center",padding:80,color:"#3a3a5a",fontFamily:"'DM Mono',monospace"}},h("div",{style:{fontSize:"2rem",marginBottom:12}},"🔒"),h("div",null,"Admin access required"))
         :h(TreeView,{cds:filtered,onSelect:setSelected})
     ),
 
