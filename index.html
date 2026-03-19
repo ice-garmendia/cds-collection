@@ -20,6 +20,8 @@ select option{background:#10101c}
 .tab.active{color:#e8e8f0;border-bottom-color:#6366f1}
 .tab:not(.active){color:#3a3a5a}
 .tab:not(.active):hover{color:#7c7c9e}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+.popup-inner{animation:fadeIn 0.2s ease}
 </style>
 </head>
 <body>
@@ -40,223 +42,156 @@ const CHART_COLORS = ["#e63946","#f4a261","#457b9d","#2a9d8f","#9b5de5","#f15bb5
 function getArtistColor(a){return ARTIST_PALETTE[a]||"#7c7c9e"}
 function photoUrl(cdId,type){return `${GITHUB_BASE}/${cdId}/${type}.jpg`}
 
-const {useState,useMemo,useCallback} = React;
+const {useState,useMemo} = React;
 const e = React.createElement;
 
-// ── STATS HELPERS ──────────────────────────────────────────
-function groupBy(arr, key) {
-  return arr.reduce((acc, item) => {
-    const k = item[key] || "Sin datos";
-    acc[k] = (acc[k]||0) + 1;
-    return acc;
-  }, {});
-}
-function groupByValue(arr, key) {
-  return arr.reduce((acc, item) => {
-    const k = item[key] || "Sin datos";
-    acc[k] = (acc[k]||0) + (item.estimatedValue||0);
-    return acc;
-  }, {});
-}
+// ── CAROUSEL (card size) ───────────────────────────────────
+function Carousel({cd,size="small"}){
+  const photos=cd.photos||[];
+  const [idx,setIdx]=useState(0);
+  const [errors,setErrors]=useState({});
+  const [loaded,setLoaded]=useState({});
+  const valid=photos.filter(p=>!errors[p]);
+  const isLarge = size==="large";
 
-// ── BAR CHART ──────────────────────────────────────────────
-function BarChart({data, color, valuePrefix="", valueSuffix="", maxItems=15}) {
-  const sorted = Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,maxItems);
-  const max = sorted[0]?.[1] || 1;
-  return e("div", {style:{display:"flex",flexDirection:"column",gap:6}},
-    ...sorted.map(([label, val], i) =>
-      e("div", {key:label, style:{display:"flex",alignItems:"center",gap:10}},
-        e("div", {style:{width:110,fontSize:"0.68rem",color:"#9090b0",textAlign:"right",flexShrink:0,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}, label),
-        e("div", {style:{flex:1,height:22,background:"#1a1a28",borderRadius:4,overflow:"hidden",position:"relative"}},
-          e("div", {style:{
-            height:"100%", borderRadius:4,
-            background: Array.isArray(color) ? color[i % color.length] : color,
-            width:`${(val/max)*100}%`,
-            transition:"width 0.6s ease",
-            display:"flex",alignItems:"center",paddingLeft:8,
-          }},
-            e("span",{style:{fontSize:"0.62rem",color:"rgba(255,255,255,0.9)",whiteSpace:"nowrap",fontWeight:600}},
-              `${valuePrefix}${typeof val==="number"&&val>999?val.toLocaleString():val}${valueSuffix}`)
-          )
-        )
+  if(valid.length===0) return e(Placeholder,{artist:cd.artist,album:cd.album,large:isLarge});
+  const cur=valid[Math.min(idx,valid.length-1)];
+
+  return e("div",{style:{width:"100%",paddingBottom:isLarge?"0":"100%",height:isLarge?"100%":"auto",position:"relative",borderRadius:isLarge?"8px":"4px 4px 0 0",overflow:"hidden",background:"#080810",flex:isLarge?"1":"none"}},
+    photos.map(type=>e("img",{key:type,src:photoUrl(cd.cdId,type),style:{display:"none"},onLoad:()=>setLoaded(l=>({...l,[type]:true})),onError:()=>setErrors(er=>({...er,[type]:true}))})),
+    e("img",{key:cur,src:photoUrl(cd.cdId,cur),alt:`${cd.album}-${cur}`,style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",transition:"opacity 0.25s",opacity:loaded[cur]?1:0}}),
+    valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i-1+valid.length)%valid.length)},style:{position:"absolute",left:isLarge?10:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"white",width:isLarge?36:22,height:isLarge?36:22,borderRadius:"50%",cursor:"pointer",fontSize:isLarge?"1.1rem":"0.85rem",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",zIndex:2}},"‹"),
+    valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i+1)%valid.length)},style:{position:"absolute",right:isLarge?10:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"white",width:isLarge?36:22,height:isLarge?36:22,borderRadius:"50%",cursor:"pointer",fontSize:isLarge?"1.1rem":"0.85rem",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",zIndex:2}},"›"),
+    e("div",{style:{position:"absolute",bottom:isLarge?12:6,left:0,right:0,display:"flex",flexDirection:"column",alignItems:"center",gap:4}},
+      e("div",{style:{fontSize:isLarge?"0.62rem":"0.5rem",color:"rgba(255,255,255,0.8)",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.08em",background:"rgba(0,0,0,0.5)",padding:isLarge?"3px 10px":"1px 6px",borderRadius:4,backdropFilter:"blur(4px)"}},PHOTO_LABELS[cur]),
+      valid.length>1&&e("div",{style:{display:"flex",gap:5}},
+        valid.map((_,i)=>e("button",{key:i,onClick:ev=>{ev.stopPropagation();setIdx(i)},style:{width:i===idx?isLarge?"18px":"14px":isLarge?"6px":"5px",height:isLarge?6:5,borderRadius:3,background:i===idx?"white":"rgba(255,255,255,0.35)",border:"none",cursor:"pointer",padding:0,transition:"all 0.2s"}}))
       )
     )
   );
 }
 
-// ── DONUT CHART ────────────────────────────────────────────
-function DonutChart({data, colors}) {
-  const entries = Object.entries(data).sort((a,b)=>b[1]-a[1]);
-  const total = entries.reduce((s,[,v])=>s+v, 0);
-  let cumulative = 0;
-  const segments = entries.map(([label, val], i) => {
-    const pct = val/total;
-    const start = cumulative;
-    cumulative += pct;
-    return {label, val, pct, start, color: colors[i % colors.length]};
-  });
-
-  const size = 180;
-  const cx = size/2, cy = size/2, r = 70, ir = 45;
-
-  function polarToXY(pct, radius) {
-    const angle = pct * 2 * Math.PI - Math.PI/2;
-    return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
-  }
-
-  function segmentPath(start, end) {
-    const [x1,y1] = polarToXY(start, r);
-    const [x2,y2] = polarToXY(end, r);
-    const [ix1,iy1] = polarToXY(end, ir);
-    const [ix2,iy2] = polarToXY(start, ir);
-    const large = (end-start) > 0.5 ? 1 : 0;
-    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${ir} ${ir} 0 ${large} 0 ${ix2} ${iy2} Z`;
-  }
-
-  return e("div", {style:{display:"flex",gap:24,alignItems:"center",flexWrap:"wrap"}},
-    e("svg", {width:size, height:size, style:{flexShrink:0}},
-      ...segments.map(seg =>
-        e("path", {key:seg.label, d:segmentPath(seg.start, seg.start+seg.pct),
-          fill:seg.color, stroke:"#0a0a14", strokeWidth:2, opacity:0.9})
-      ),
-      e("text", {x:cx, y:cy-8, textAnchor:"middle", fill:"#e8e8f0", fontSize:22, fontWeight:700, fontFamily:"'Playfair Display',serif"}, total),
-      e("text", {x:cx, y:cy+12, textAnchor:"middle", fill:"#5a5a7a", fontSize:9, fontFamily:"'DM Mono',monospace"}, "TOTAL")
+function Placeholder({artist,album,large=false}){
+  const color=getArtistColor(artist);
+  const initials=artist.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  return e("div",{style:{width:"100%",paddingBottom:large?"0":"100%",height:large?"100%":"auto",position:"relative",background:`linear-gradient(135deg,${color}dd,${color}44)`,borderRadius:large?"8px":"4px 4px 0 0",overflow:"hidden",flex:large?"1":"none",minHeight:large?"300px":"auto"}},
+    e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"8px",padding:"16px"}},
+      e("div",{style:{fontSize:large?"4rem":"2rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"white",textShadow:"0 2px 12px rgba(0,0,0,0.5)",lineHeight:1}},initials),
+      e("div",{style:{fontSize:large?"0.75rem":"0.52rem",color:"rgba(255,255,255,0.7)",textAlign:"center",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em",lineHeight:1.4}},album.slice(0,large?40:22))
     ),
-    e("div", {style:{display:"flex",flexDirection:"column",gap:6,flex:1}},
-      ...segments.slice(0,12).map(seg =>
-        e("div", {key:seg.label, style:{display:"flex",alignItems:"center",gap:8}},
-          e("div", {style:{width:10,height:10,borderRadius:2,background:seg.color,flexShrink:0}}),
-          e("div", {style:{fontSize:"0.66rem",color:"#9090b0",flex:1}}, seg.label),
-          e("div", {style:{fontSize:"0.66rem",color:"#e8e8f0",fontWeight:600}}, seg.val),
-          e("div", {style:{fontSize:"0.6rem",color:"#4a4a6a"}}, `${(seg.pct*100).toFixed(1)}%`)
+    e("div",{style:{position:"absolute",bottom:"-15%",right:"-15%",width:"55%",paddingBottom:"55%",borderRadius:"50%",border:"2px solid rgba(255,255,255,0.1)",boxShadow:"inset 0 0 0 8px rgba(255,255,255,0.07)"}})
+  );
+}
+
+function Badge({label,color}){
+  return e("span",{className:"badge",style:{background:color+"22",border:`1px solid ${color}55`,color}},label);
+}
+
+// ── CD DETAIL POPUP ────────────────────────────────────────
+function CDPopup({cd, onClose, onEdit}){
+  const ac = getArtistColor(cd.artist);
+  const condColor = CONDITION_COLORS[cd.condition]||"#7c7c9e";
+
+  const fields = [
+    ["ID", cd.cdId],
+    ["Artista", cd.artist],
+    ["Título", cd.album],
+    ["Año original", cd.year||"—"],
+    ["Año de edición", cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
+    ["Sello", cd.label||"—"],
+    ["País", cd.country||"—"],
+    ["Categoría", cd.genre||"—"],
+    ["Tipo", cd.type||"—"],
+    ["Variante", cd.variety||"—"],
+    ["Estado (media)", cd.condition||"—"],
+    ["Estado (artwork)", cd.artworkCondition||"—"],
+    ["Valor estimado", cd.estimatedValue?`€${cd.estimatedValue.toLocaleString()}`:"—"],
+    ["Notas", cd.notes||"—"],
+  ].filter(([,v])=>v&&v!=="—");
+
+  return e("div",{
+    onClick:onClose,
+    style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(8px)"}},
+    e("div",{
+      className:"popup-inner",
+      onClick:ev=>ev.stopPropagation(),
+      style:{background:"#10101c",border:`1px solid ${ac}33`,borderRadius:16,width:"100%",maxWidth:820,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:`0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px ${ac}22`}},
+
+      // Top: close button
+      e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 20px",borderBottom:"1px solid #1a1a28",flexShrink:0}},
+        e("div",{style:{fontSize:"0.62rem",color:"#3a3a5a",letterSpacing:"0.1em"}},cd.cdId),
+        e("div",{style:{display:"flex",gap:8}},
+          e("button",{onClick:()=>onEdit(cd),style:{background:"#1e1e35",border:"1px solid #3a3a5a",color:"#9090c0",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.72rem"}},"Editar"),
+          e("button",{onClick:onClose,style:{background:"transparent",border:"none",color:"#5a5a7a",fontSize:"1.3rem",cursor:"pointer",lineHeight:1,padding:"0 4px"}},"✕")
         )
-      )
-    )
-  );
-}
-
-// ── STAT CARD ──────────────────────────────────────────────
-function StatCard({title, children, span=1}) {
-  return e("div", {style:{
-    background:"#10101c", border:"1px solid #1a1a28", borderRadius:12,
-    padding:"20px 24px", gridColumn:`span ${span}`,
-  }},
-    e("div", {style:{fontSize:"0.62rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}}, title),
-    children
-  );
-}
-
-// ── KPI ───────────────────────────────────────────────────
-function KPI({label, value, color="#e8e8f0", sub}) {
-  return e("div", {style:{textAlign:"center",padding:"8px 16px"}},
-    e("div", {style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color}}, value),
-    e("div", {style:{fontSize:"0.62rem",color:"#5a5a7a",marginTop:2,textTransform:"uppercase",letterSpacing:"0.08em"}}, label),
-    sub && e("div", {style:{fontSize:"0.6rem",color:"#3a3a5a",marginTop:1}}, sub)
-  );
-}
-
-// ── STATS TAB ─────────────────────────────────────────────
-function StatsTab({cds}) {
-  const totalValue = cds.reduce((s,c)=>s+(c.estimatedValue||0),0);
-  const avgValue = totalValue / cds.length;
-  const promos = cds.filter(c=>c.type==="Promo").length;
-  const variants = cds.filter(c=>c.variety==="Variant").length;
-  const withPhotos = cds.filter(c=>c.photos&&c.photos.length>0).length;
-  const topValue = Math.max(...cds.map(c=>c.estimatedValue||0));
-  const topCd = cds.find(c=>c.estimatedValue===topValue);
-
-  const byCountry = groupBy(cds, "country");
-  const byArtist = groupBy(cds, "artist");
-  const valueByArtist = groupByValue(cds, "artist");
-  const byType = {"Commercial": cds.filter(c=>c.type==="Commercial").length, "Promo": promos};
-
-  // Artist x Category matrix
-  const artistCategories = {};
-  ARTISTS.forEach(a => {
-    const artistCds = cds.filter(c=>c.artist===a);
-    const cats = groupBy(artistCds, "genre");
-    artistCategories[a] = cats;
-  });
-
-  // Top categories overall
-  const byCategory = groupBy(cds, "genre");
-
-  return e("div", {style:{display:"flex",flexDirection:"column",gap:16}},
-
-    // KPIs row
-    e("div", {style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12}},
-      ...[
-        ["Discos", cds.length, "#9090c8"],
-        ["Valor total", `€${totalValue.toLocaleString()}`, "#fbbf24"],
-        ["Valor promedio", `€${avgValue.toFixed(0)}`, "#fbbf24", "por disco"],
-        ["Más valioso", `€${topValue.toLocaleString()}`, "#4ade80", topCd?.album.slice(0,20)],
-        ["Promos", promos, "#f59e0b", `${((promos/cds.length)*100).toFixed(1)}% del total`],
-        ["Variantes", variants, "#ec4899"],
-        ["Con fotos", withPhotos, "#4ade80", `de ${cds.length}`],
-        ["Países", Object.keys(byCountry).length, "#9090c8"],
-      ].map(([label,value,color,sub])=>
-        e("div", {key:label, style:{background:"#10101c",border:"1px solid #1a1a28",borderRadius:10,padding:"14px 16px",textAlign:"center"}},
-          e("div", {style:{fontSize:"1.4rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color}}, value),
-          e("div", {style:{fontSize:"0.6rem",color:"#5a5a7a",marginTop:2,textTransform:"uppercase",letterSpacing:"0.08em"}}, label),
-          sub && e("div", {style:{fontSize:"0.58rem",color:"#3a3a5a",marginTop:1}}, sub)
-        )
-      )
-    ),
-
-    // Row 1: Country + Type donut
-    e("div", {style:{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16}},
-      e(StatCard, {title:"Discos por país"},
-        e(BarChart, {data:byCountry, color:CHART_COLORS, maxItems:20})
       ),
-      e(StatCard, {title:"Commercial vs Promo"},
-        e(DonutChart, {data:byType, colors:["#6366f1","#f59e0b"]})
-      )
-    ),
 
-    // Row 2: By artist (count + value)
-    e("div", {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
-      e(StatCard, {title:"Discos por artista"},
-        e(BarChart, {data:byArtist, color:ARTISTS.map(a=>getArtistColor(a)), maxItems:10})
-      ),
-      e(StatCard, {title:"Valor estimado por artista"},
-        e(BarChart, {data:Object.fromEntries(Object.entries(valueByArtist).map(([k,v])=>[k,Math.round(v)])), color:ARTISTS.map(a=>getArtistColor(a)), valuePrefix:"€", maxItems:10})
-      )
-    ),
+      // Body
+      e("div",{style:{display:"flex",flex:1,overflow:"hidden"}},
 
-    // Row 3: Category donut + Artist x Category matrix
-    e("div", {style:{display:"grid",gridTemplateColumns:"1fr 2fr",gap:16}},
-      e(StatCard, {title:"Discos por categoría"},
-        e(DonutChart, {data:byCategory, colors:CHART_COLORS})
-      ),
-      e(StatCard, {title:"Artista × Categoría"},
-        e("div", {style:{overflowX:"auto"}},
-          e("table", {style:{width:"100%",borderCollapse:"collapse",fontSize:"0.68rem"}},
-            e("thead", null,
-              e("tr", null,
-                e("th", {style:{textAlign:"left",color:"#3a3a5a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",fontSize:"0.6rem",textTransform:"uppercase",letterSpacing:"0.1em"}},"Artista"),
-                ...CATEGORIES.slice(0,10).map(cat=>
-                  e("th", {key:cat, style:{color:"#3a3a5a",padding:"4px 6px",borderBottom:"1px solid #1a1a28",fontSize:"0.58rem",textTransform:"uppercase",letterSpacing:"0.08em",textAlign:"center",whiteSpace:"nowrap"}}, cat.replace(" · Live","↑").slice(0,8))
-                ),
-                e("th", {style:{color:"#5a5a7a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",textAlign:"center",fontSize:"0.6rem"}},"Total")
+        // Left: photo
+        e("div",{style:{width:"42%",flexShrink:0,background:"#080810",display:"flex",flexDirection:"column"}},
+          cd.photos&&cd.photos.length>0
+            ? e("div",{style:{flex:1,position:"relative",minHeight:300}},
+                e(Carousel,{cd,size:"large"})
               )
+            : e(Placeholder,{artist:cd.artist,album:cd.album,large:true})
+        ),
+
+        // Right: info
+        e("div",{style:{flex:1,overflowY:"auto",padding:"24px 28px",display:"flex",flexDirection:"column",gap:20}},
+
+          // Title block
+          e("div",null,
+            e("div",{style:{fontSize:"0.65rem",color:ac,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:600,marginBottom:6}},cd.artist),
+            e("h2",{style:{fontFamily:"'Playfair Display',serif",fontSize:"1.6rem",fontWeight:900,color:"#ffffff",lineHeight:1.2,marginBottom:10}},cd.album),
+            e("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+              cd.condition&&e(Badge,{label:cd.condition,color:condColor}),
+              cd.type==="Promo"&&e(Badge,{label:"PROMO",color:"#f59e0b"}),
+              cd.genre&&e(Badge,{label:cd.genre,color:"#6366f1"}),
+              cd.variety==="Variant"&&e(Badge,{label:"Variante",color:"#ec4899"})
+            )
+          ),
+
+          // Value highlight
+          cd.estimatedValue>0&&e("div",{style:{background:"#1a1a10",border:"1px solid #fbbf2433",borderRadius:10,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            e("div",{style:{fontSize:"0.62rem",color:"#5a5a3a",textTransform:"uppercase",letterSpacing:"0.1em"}},"Valor estimado"),
+            e("div",{style:{fontSize:"1.4rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"#fbbf24"}},`€${cd.estimatedValue.toLocaleString()}`)
+          ),
+
+          // Data grid
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px"}},
+            ...fields.filter(([k])=>!["Artista","Título","Estado (media)","Valor estimado","Notas"].includes(k)).map(([label,val])=>
+              e("div",{key:label},
+                e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}},label),
+                e("div",{style:{fontSize:"0.82rem",color:"#c0c0d8"}},val)
+              )
+            )
+          ),
+
+          // State row
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px"}},
+            e("div",null,
+              e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}},"Estado media"),
+              cd.condition?e(Badge,{label:cd.condition,color:condColor}):e("span",{style:{color:"#3a3a5a"}},"—")
             ),
-            e("tbody", null,
-              ...ARTISTS.map((artist,ai) => {
-                const ac = getArtistColor(artist);
-                const total = byArtist[artist]||0;
-                return e("tr", {key:artist, style:{borderBottom:"1px solid #12121e"}},
-                  e("td", {style:{padding:"6px 8px",color:ac,fontWeight:600,whiteSpace:"nowrap"}}, artist),
-                  ...CATEGORIES.slice(0,10).map(cat => {
-                    const val = artistCategories[artist]?.[cat]||0;
-                    return e("td", {key:cat, style:{textAlign:"center",padding:"6px 6px"}},
-                      val > 0
-                        ? e("div", {style:{background:ac+"33",color:ac,borderRadius:4,padding:"2px 4px",fontSize:"0.65rem",fontWeight:600,display:"inline-block",minWidth:20}}, val)
-                        : e("span", {style:{color:"#2a2a3a"}}, "·")
-                    );
-                  }),
-                  e("td", {style:{textAlign:"center",padding:"6px 8px",color:"#e8e8f0",fontWeight:700}}, total)
-                );
-              })
+            cd.artworkCondition&&e("div",null,
+              e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}},"Estado artwork"),
+              e("span",{style:{fontSize:"0.82rem",color:"#c0c0d8"}},cd.artworkCondition)
+            )
+          ),
+
+          // Notes
+          cd.notes&&e("div",{style:{background:"#0d0d1a",border:"1px solid #1a1a28",borderRadius:8,padding:"12px 14px"}},
+            e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}},"Notas"),
+            e("div",{style:{fontSize:"0.78rem",color:"#9090b0",lineHeight:1.6}},cd.notes)
+          ),
+
+          // Photos list
+          cd.photos&&cd.photos.length>0&&e("div",null,
+            e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}},"Fotos disponibles"),
+            e("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+              ...cd.photos.map(p=>e("span",{key:p,className:"badge",style:{background:"#1e2a1e",border:"1px solid #4ade8055",color:"#4ade80"}},`◉ ${PHOTO_LABELS[p]}`))
             )
           )
         )
@@ -265,52 +200,129 @@ function StatsTab({cds}) {
   );
 }
 
-// ── CAROUSEL ──────────────────────────────────────────────
-function Carousel({cd}){
-  const photos=cd.photos||[];
-  const [idx,setIdx]=useState(0);
-  const [errors,setErrors]=useState({});
-  const [loaded,setLoaded]=useState({});
-  const valid=photos.filter(p=>!errors[p]);
-  if(valid.length===0) return e(Placeholder,{artist:cd.artist,album:cd.album});
-  const cur=valid[Math.min(idx,valid.length-1)];
-  return e("div",{style:{width:"100%",paddingBottom:"100%",position:"relative",borderRadius:"4px 4px 0 0",overflow:"hidden",background:"#080810"}},
-    photos.map(type=>e("img",{key:type,src:photoUrl(cd.cdId,type),style:{display:"none"},onLoad:()=>setLoaded(l=>({...l,[type]:true})),onError:()=>setErrors(er=>({...er,[type]:true}))})),
-    e("img",{key:cur,src:photoUrl(cd.cdId,cur),alt:`${cd.album}-${cur}`,style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",transition:"opacity 0.25s",opacity:loaded[cur]?1:0}}),
-    valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i-1+valid.length)%valid.length)},style:{position:"absolute",left:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.55)",border:"none",color:"white",width:22,height:22,borderRadius:"50%",cursor:"pointer",fontSize:"0.85rem"}},"‹"),
-    valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i+1)%valid.length)},style:{position:"absolute",right:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.55)",border:"none",color:"white",width:22,height:22,borderRadius:"50%",cursor:"pointer",fontSize:"0.85rem"}},"›"),
-    e("div",{style:{position:"absolute",bottom:6,left:0,right:0,display:"flex",flexDirection:"column",alignItems:"center",gap:4}},
-      e("div",{style:{fontSize:"0.5rem",color:"rgba(255,255,255,0.7)",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.08em",background:"rgba(0,0,0,0.45)",padding:"1px 6px",borderRadius:4}},PHOTO_LABELS[cur]),
-      valid.length>1&&e("div",{style:{display:"flex",gap:4}},
-        valid.map((_,i)=>e("button",{key:i,onClick:ev=>{ev.stopPropagation();setIdx(i)},style:{width:i===idx?"14px":"5px",height:5,borderRadius:3,background:i===idx?"white":"rgba(255,255,255,0.35)",border:"none",cursor:"pointer",padding:0,transition:"all 0.2s"}}))
+// ── STATS ─────────────────────────────────────────────────
+function groupBy(arr,key){return arr.reduce((acc,item)=>{const k=item[key]||"Sin datos";acc[k]=(acc[k]||0)+1;return acc;},{})}
+function groupByValue(arr,key){return arr.reduce((acc,item)=>{const k=item[key]||"Sin datos";acc[k]=(acc[k]||0)+(item.estimatedValue||0);return acc;},{})}
+
+function BarChart({data,color,valuePrefix="",maxItems=15}){
+  const sorted=Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,maxItems);
+  const max=sorted[0]?.[1]||1;
+  return e("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+    ...sorted.map(([label,val],i)=>
+      e("div",{key:label,style:{display:"flex",alignItems:"center",gap:10}},
+        e("div",{style:{width:110,fontSize:"0.68rem",color:"#9090b0",textAlign:"right",flexShrink:0,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},label),
+        e("div",{style:{flex:1,height:22,background:"#1a1a28",borderRadius:4,overflow:"hidden"}},
+          e("div",{style:{height:"100%",borderRadius:4,background:Array.isArray(color)?color[i%color.length]:color,width:`${(val/max)*100}%`,transition:"width 0.6s ease",display:"flex",alignItems:"center",paddingLeft:8}},
+            e("span",{style:{fontSize:"0.62rem",color:"rgba(255,255,255,0.9)",whiteSpace:"nowrap",fontWeight:600}},`${valuePrefix}${typeof val==="number"&&val>999?val.toLocaleString():val}`)
+          )
+        )
       )
     )
   );
 }
 
-function Placeholder({artist,album}){
-  const color=getArtistColor(artist);
-  const initials=artist.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  return e("div",{style:{width:"100%",paddingBottom:"100%",position:"relative",background:`linear-gradient(135deg,${color}dd,${color}44)`,borderRadius:"4px 4px 0 0",overflow:"hidden"}},
-    e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"6px",padding:"8px"}},
-      e("div",{style:{fontSize:"2rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"white",textShadow:"0 2px 8px rgba(0,0,0,0.5)",lineHeight:1}},initials),
-      e("div",{style:{fontSize:"0.52rem",color:"rgba(255,255,255,0.75)",textAlign:"center",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em",lineHeight:1.3}},album.slice(0,22))
+function DonutChart({data,colors}){
+  const entries=Object.entries(data).sort((a,b)=>b[1]-a[1]);
+  const total=entries.reduce((s,[,v])=>s+v,0);
+  let cum=0;
+  const segs=entries.map(([label,val],i)=>{const pct=val/total;const start=cum;cum+=pct;return{label,val,pct,start,color:colors[i%colors.length]};});
+  const sz=180,cx=90,cy=90,r=70,ir=45;
+  function polar(pct,rad){const a=pct*2*Math.PI-Math.PI/2;return[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];}
+  function path(s,end){const[x1,y1]=polar(s,r);const[x2,y2]=polar(end,r);const[ix1,iy1]=polar(end,ir);const[ix2,iy2]=polar(s,ir);const lg=(end-s)>0.5?1:0;return `M ${x1} ${y1} A ${r} ${r} 0 ${lg} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${ir} ${ir} 0 ${lg} 0 ${ix2} ${iy2} Z`;}
+  return e("div",{style:{display:"flex",gap:24,alignItems:"center",flexWrap:"wrap"}},
+    e("svg",{width:sz,height:sz,style:{flexShrink:0}},
+      ...segs.map(seg=>e("path",{key:seg.label,d:path(seg.start,seg.start+seg.pct),fill:seg.color,stroke:"#0a0a14",strokeWidth:2,opacity:0.9})),
+      e("text",{x:cx,y:cy-8,textAnchor:"middle",fill:"#e8e8f0",fontSize:22,fontWeight:700,fontFamily:"'Playfair Display',serif"},total),
+      e("text",{x:cx,y:cy+12,textAnchor:"middle",fill:"#5a5a7a",fontSize:9,fontFamily:"'DM Mono',monospace"},"TOTAL")
     ),
-    e("div",{style:{position:"absolute",bottom:"-20%",right:"-20%",width:"60%",paddingBottom:"60%",borderRadius:"50%",border:"2px solid rgba(255,255,255,0.12)"}})
+    e("div",{style:{display:"flex",flexDirection:"column",gap:6,flex:1}},
+      ...segs.slice(0,12).map(seg=>
+        e("div",{key:seg.label,style:{display:"flex",alignItems:"center",gap:8}},
+          e("div",{style:{width:10,height:10,borderRadius:2,background:seg.color,flexShrink:0}}),
+          e("div",{style:{fontSize:"0.66rem",color:"#9090b0",flex:1}},seg.label),
+          e("div",{style:{fontSize:"0.66rem",color:"#e8e8f0",fontWeight:600}},seg.val),
+          e("div",{style:{fontSize:"0.6rem",color:"#4a4a6a"}},`${(seg.pct*100).toFixed(1)}%`)
+        )
+      )
+    )
   );
 }
 
-function Badge({label,color}){
-  return e("span",{className:"badge",style:{background:color+"22",border:`1px solid ${color}55`,color}},label);
+function StatCard({title,children}){
+  return e("div",{style:{background:"#10101c",border:"1px solid #1a1a28",borderRadius:12,padding:"20px 24px"}},
+    e("div",{style:{fontSize:"0.62rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},title),
+    children
+  );
 }
 
-function CDCard({cd,onEdit,onDelete}){
+function StatsTab({cds}){
+  const totalValue=cds.reduce((s,c)=>s+(c.estimatedValue||0),0);
+  const avgValue=totalValue/cds.length;
+  const promos=cds.filter(c=>c.type==="Promo").length;
+  const variants=cds.filter(c=>c.variety==="Variant").length;
+  const withPhotos=cds.filter(c=>c.photos&&c.photos.length>0).length;
+  const topValue=Math.max(...cds.map(c=>c.estimatedValue||0));
+  const topCd=cds.find(c=>c.estimatedValue===topValue);
+  const byCountry=groupBy(cds,"country");
+  const byArtist=groupBy(cds,"artist");
+  const valueByArtist=groupByValue(cds,"artist");
+  const byType={"Commercial":cds.filter(c=>c.type==="Commercial").length,"Promo":promos};
+  const byCategory=groupBy(cds,"genre");
+  const artistCategories={};
+  ARTISTS.forEach(a=>{artistCategories[a]=groupBy(cds.filter(c=>c.artist===a),"genre");});
+
+  return e("div",{style:{display:"flex",flexDirection:"column",gap:16}},
+    e("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12}},
+      ...[["Discos",cds.length,"#9090c8"],["Valor total",`€${totalValue.toLocaleString()}`,"#fbbf24"],["Valor promedio",`€${avgValue.toFixed(0)}`,"#fbbf24","por disco"],["Más valioso",`€${topValue.toLocaleString()}`,"#4ade80",topCd?.album.slice(0,18)],["Promos",promos,"#f59e0b",`${((promos/cds.length)*100).toFixed(1)}%`],["Variantes",variants,"#ec4899"],["Con fotos",withPhotos,"#4ade80",`de ${cds.length}`],["Países",Object.keys(byCountry).length,"#9090c8"]].map(([label,value,color,sub])=>
+        e("div",{key:label,style:{background:"#10101c",border:"1px solid #1a1a28",borderRadius:10,padding:"14px 16px",textAlign:"center"}},
+          e("div",{style:{fontSize:"1.4rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color}},value),
+          e("div",{style:{fontSize:"0.6rem",color:"#5a5a7a",marginTop:2,textTransform:"uppercase",letterSpacing:"0.08em"}},label),
+          sub&&e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",marginTop:1}},sub)
+        )
+      )
+    ),
+    e("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16}},
+      e(StatCard,{title:"Discos por país"},e(BarChart,{data:byCountry,color:CHART_COLORS,maxItems:20})),
+      e(StatCard,{title:"Commercial vs Promo"},e(DonutChart,{data:byType,colors:["#6366f1","#f59e0b"]}))
+    ),
+    e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
+      e(StatCard,{title:"Discos por artista"},e(BarChart,{data:byArtist,color:ARTISTS.map(a=>getArtistColor(a)),maxItems:10})),
+      e(StatCard,{title:"Valor estimado por artista"},e(BarChart,{data:Object.fromEntries(Object.entries(valueByArtist).map(([k,v])=>[k,Math.round(v)])),color:ARTISTS.map(a=>getArtistColor(a)),valuePrefix:"€",maxItems:10}))
+    ),
+    e("div",{style:{display:"grid",gridTemplateColumns:"1fr 2fr",gap:16}},
+      e(StatCard,{title:"Discos por categoría"},e(DonutChart,{data:byCategory,colors:CHART_COLORS})),
+      e(StatCard,{title:"Artista × Categoría"},
+        e("div",{style:{overflowX:"auto"}},
+          e("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:"0.68rem"}},
+            e("thead",null,e("tr",null,
+              e("th",{style:{textAlign:"left",color:"#3a3a5a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",fontSize:"0.6rem",textTransform:"uppercase"}},"Artista"),
+              ...CATEGORIES.slice(0,10).map(cat=>e("th",{key:cat,style:{color:"#3a3a5a",padding:"4px 6px",borderBottom:"1px solid #1a1a28",fontSize:"0.58rem",textTransform:"uppercase",textAlign:"center",whiteSpace:"nowrap"}},cat.slice(0,8))),
+              e("th",{style:{color:"#5a5a7a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",textAlign:"center",fontSize:"0.6rem"}},"Total")
+            )),
+            e("tbody",null,...ARTISTS.map(artist=>{
+              const ac=getArtistColor(artist);
+              return e("tr",{key:artist,style:{borderBottom:"1px solid #12121e"}},
+                e("td",{style:{padding:"6px 8px",color:ac,fontWeight:600,whiteSpace:"nowrap"}},artist),
+                ...CATEGORIES.slice(0,10).map(cat=>{const val=artistCategories[artist]?.[cat]||0;return e("td",{key:cat,style:{textAlign:"center",padding:"6px 6px"}},val>0?e("div",{style:{background:ac+"33",color:ac,borderRadius:4,padding:"2px 4px",fontSize:"0.65rem",fontWeight:600,display:"inline-block",minWidth:20}},val):e("span",{style:{color:"#2a2a3a"}},"·"));}),
+                e("td",{style:{textAlign:"center",padding:"6px 8px",color:"#e8e8f0",fontWeight:700}},byArtist[artist]||0)
+              );
+            }))
+          )
+        )
+      )
+    )
+  );
+}
+
+// ── CARD & ROW ────────────────────────────────────────────
+function CDCard({cd,onEdit,onDelete,onSelect}){
   const [hovered,setHovered]=useState(false);
   const condColor=CONDITION_COLORS[cd.condition]||"#7c7c9e";
   const ac=getArtistColor(cd.artist);
-  return e("div",{onMouseEnter:()=>setHovered(true),onMouseLeave:()=>setHovered(false),style:{background:hovered?"#1e1e2e":"#13131f",border:`1px solid ${hovered?"#3a3a58":"#1e1e30"}`,borderRadius:8,overflow:"hidden",transition:"all 0.2s",transform:hovered?"translateY(-4px)":"none",boxShadow:hovered?`0 16px 40px rgba(0,0,0,0.6),0 0 0 1px ${ac}33`:"0 2px 8px rgba(0,0,0,0.3)",display:"flex",flexDirection:"column"}},
+  return e("div",{onMouseEnter:()=>setHovered(true),onMouseLeave:()=>setHovered(false),onClick:()=>onSelect(cd),
+    style:{background:hovered?"#1e1e2e":"#13131f",border:`1px solid ${hovered?"#3a3a58":"#1e1e30"}`,borderRadius:8,overflow:"hidden",transition:"all 0.2s",transform:hovered?"translateY(-4px)":"none",boxShadow:hovered?`0 16px 40px rgba(0,0,0,0.6),0 0 0 1px ${ac}33`:"0 2px 8px rgba(0,0,0,0.3)",display:"flex",flexDirection:"column",cursor:"pointer"}},
     e("div",{style:{position:"relative"}},
-      e(Carousel,{cd}),
+      e(Carousel,{cd,size:"small"}),
       e("div",{style:{position:"absolute",top:6,right:6}},e(Badge,{label:cd.condition||"?",color:condColor})),
       cd.type==="Promo"&&e("div",{style:{position:"absolute",top:6,left:6}},e(Badge,{label:"PROMO",color:"#f59e0b"}))
     ),
@@ -335,12 +347,13 @@ function CDCard({cd,onEdit,onDelete}){
   );
 }
 
-function CDRow({cd,onEdit,onDelete}){
+function CDRow({cd,onEdit,onDelete,onSelect}){
   const [hovered,setHovered]=useState(false);
   const condColor=CONDITION_COLORS[cd.condition]||"#7c7c9e";
   const ac=getArtistColor(cd.artist);
   const fp=cd.photos&&cd.photos.length>0?photoUrl(cd.cdId,cd.photos[0]):null;
-  return e("div",{onMouseEnter:()=>setHovered(true),onMouseLeave:()=>setHovered(false),style:{display:"grid",gridTemplateColumns:"44px 80px 1fr 120px 55px 80px 95px 75px 70px",alignItems:"center",gap:10,padding:"8px 16px",background:hovered?"#1a1a2a":"transparent",borderBottom:"1px solid #1a1a28",transition:"background 0.15s"}},
+  return e("div",{onMouseEnter:()=>setHovered(true),onMouseLeave:()=>setHovered(false),onClick:()=>onSelect(cd),
+    style:{display:"grid",gridTemplateColumns:"44px 80px 1fr 120px 55px 80px 95px 75px 70px",alignItems:"center",gap:10,padding:"8px 16px",background:hovered?"#1a1a2a":"transparent",borderBottom:"1px solid #1a1a28",transition:"background 0.15s",cursor:"pointer"}},
     e("div",{style:{width:40,height:40,borderRadius:4,overflow:"hidden",flexShrink:0}},
       fp?e("img",{src:fp,alt:cd.album,style:{width:"100%",height:"100%",objectFit:"cover"},onError:ev=>ev.target.style.display="none"})
         :e("div",{style:{width:40,height:40,background:`linear-gradient(135deg,${ac}cc,${ac}44)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.7rem",fontWeight:900,color:"white",fontFamily:"'Playfair Display',serif"}},cd.artist.split(" ").map(w=>w[0]).join("").slice(0,2))
@@ -356,12 +369,13 @@ function CDRow({cd,onEdit,onDelete}){
     e(Badge,{label:cd.condition||"?",color:condColor}),
     e("div",{style:{fontSize:"0.72rem",color:"#fbbf24"}},cd.estimatedValue?`€${cd.estimatedValue.toLocaleString()}`:"—"),
     e("div",{style:{display:"flex",gap:5}},
-      e("button",{onClick:()=>onEdit(cd),style:{background:"transparent",border:"1px solid #2a2a4a",color:"#5a5a8a",borderRadius:4,padding:"3px 7px",fontSize:"0.62rem",cursor:"pointer"}},"Edit"),
-      e("button",{onClick:()=>onDelete(cd.cdId),style:{background:"transparent",border:"1px solid #4a2a2a",color:"#a06060",borderRadius:4,padding:"3px 7px",fontSize:"0.62rem",cursor:"pointer"}},"✕")
+      e("button",{onClick:ev=>{ev.stopPropagation();onEdit(cd)},style:{background:"transparent",border:"1px solid #2a2a4a",color:"#5a5a8a",borderRadius:4,padding:"3px 7px",fontSize:"0.62rem",cursor:"pointer"}},"Edit"),
+      e("button",{onClick:ev=>{ev.stopPropagation();onDelete(cd.cdId)},style:{background:"transparent",border:"1px solid #4a2a2a",color:"#a06060",borderRadius:4,padding:"3px 7px",fontSize:"0.62rem",cursor:"pointer"}},"✕")
     )
   );
 }
 
+// ── EDIT MODAL ────────────────────────────────────────────
 function CDModal({cd,onSave,onClose}){
   const [form,setForm]=useState(cd?{...cd,year:cd.year||"",issueYear:cd.issueYear||"",estimatedValue:cd.estimatedValue||"",photos:cd.photos||[]}:{artist:"",album:"",year:"",issueYear:"",label:"",genre:"",condition:"Nuevo",estimatedValue:"",notes:"",type:"Commercial",variety:"Unique",country:"",photos:[]});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
@@ -385,14 +399,11 @@ function CDModal({cd,onSave,onClose}){
         e("div",null,e("label",{style:lbl},"Sello"),e("input",{style:inp,value:form.label,onChange:ev=>set("label",ev.target.value)})),
         e("div",null,e("label",{style:lbl},"País"),e("input",{style:inp,value:form.country||"",onChange:ev=>set("country",ev.target.value),placeholder:"Ej: UK"})),
         e("div",null,e("label",{style:lbl},"Categoría"),
-          e("select",{style:inp,value:form.genre,onChange:ev=>set("genre",ev.target.value)},
-            e("option",{value:""},"— Seleccionar —"),...CATEGORIES.map(g=>e("option",{key:g,value:g},g)))),
+          e("select",{style:inp,value:form.genre,onChange:ev=>set("genre",ev.target.value)},e("option",{value:""},"— Seleccionar —"),...CATEGORIES.map(g=>e("option",{key:g,value:g},g)))),
         e("div",null,e("label",{style:lbl},"Estado"),
-          e("select",{style:inp,value:form.condition,onChange:ev=>set("condition",ev.target.value)},
-            ...CONDITIONS.map(c=>e("option",{key:c,value:c},c)))),
+          e("select",{style:inp,value:form.condition,onChange:ev=>set("condition",ev.target.value)},...CONDITIONS.map(c=>e("option",{key:c,value:c},c)))),
         e("div",null,e("label",{style:lbl},"Tipo"),
-          e("select",{style:inp,value:form.type,onChange:ev=>set("type",ev.target.value)},
-            e("option",{value:"Commercial"},"Commercial"),e("option",{value:"Promo"},"Promo"))),
+          e("select",{style:inp,value:form.type,onChange:ev=>set("type",ev.target.value)},e("option",{value:"Commercial"},"Commercial"),e("option",{value:"Promo"},"Promo"))),
         e("div",null,e("label",{style:lbl},"Valor estimado (€)"),e("input",{style:inp,type:"number",value:form.estimatedValue,onChange:ev=>set("estimatedValue",ev.target.value)})),
         e("div",{style:{gridColumn:"1/-1"}},
           e("label",{style:lbl},"Fotos en GitHub"),
@@ -404,7 +415,7 @@ function CDModal({cd,onSave,onClose}){
       ),
       e("div",{style:{display:"flex",gap:10,marginTop:22}},
         e("button",{onClick:onClose,style:{flex:1,background:"transparent",border:"1px solid #252538",color:"#5a5a7a",borderRadius:6,padding:10,cursor:"pointer",fontSize:"0.78rem"}},"Cancelar"),
-        e("button",{onClick:()=>{if(form.artist&&form.album)onSave(form)},style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",fontSize:"0.78rem",fontWeight:600,letterSpacing:"0.05em"}},cd?.cdId?"Guardar cambios":"Agregar")
+        e("button",{onClick:()=>{if(form.artist&&form.album)onSave(form)},style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",fontSize:"0.78rem",fontWeight:600}},cd?.cdId?"Guardar cambios":"Agregar")
       )
     )
   );
@@ -422,6 +433,7 @@ function App(){
   const [filterType,setFilterType]=useState("");
   const [sortBy,setSortBy]=useState("artist");
   const [modal,setModal]=useState(null);
+  const [selectedCd,setSelectedCd]=useState(null);
 
   const filtered=useMemo(()=>cds.filter(cd=>{
     const q=search.toLowerCase();
@@ -445,16 +457,15 @@ function App(){
     setModal(null);
   };
   const deleteCd=cdId=>{if(confirm("¿Eliminar este CD?"))setCds(prev=>prev.filter(c=>c.cdId!==cdId))};
+  const handleEdit=cd=>{setSelectedCd(null);setModal(cd);};
 
   const totalValue=cds.reduce((s,c)=>s+(c.estimatedValue||0),0);
   const withPhotos=cds.filter(c=>c.photos&&c.photos.length>0).length;
   const promos=cds.filter(c=>c.type==="Promo").length;
   const variants=cds.filter(c=>c.variety==="Variant").length;
-
   const inputBase={background:"#10101c",border:"1px solid #1e1e30",borderRadius:6,padding:"7px 11px",color:"#c0c0d8",fontFamily:"'DM Mono',monospace",fontSize:"0.74rem",outline:"none"};
 
   return e("div",{style:{minHeight:"100vh",background:"#0a0a14",color:"#e8e8f0"}},
-    // Header
     e("div",{style:{borderBottom:"1px solid #1a1a28",padding:"18px 24px 0",position:"sticky",top:0,zIndex:100,background:"rgba(10,10,20,0.97)",backdropFilter:"blur(16px)"}},
       e("div",{style:{maxWidth:1500,margin:"0 auto"}},
         e("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:14}},
@@ -471,17 +482,11 @@ function App(){
           ),
           activeTab==="collection"&&e("button",{onClick:()=>setModal("add"),style:{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:8,padding:"9px 16px",cursor:"pointer",fontSize:"0.75rem",fontWeight:600,letterSpacing:"0.05em",boxShadow:"0 4px 20px rgba(99,102,241,0.35)",whiteSpace:"nowrap",marginTop:4}},`+ Agregar CD`)
         ),
-        // Tabs
         e("div",{style:{display:"flex",gap:0,borderBottom:"1px solid #1a1a28",marginBottom:-1}},
-          ...["collection","stats"].map(tab=>
-            e("button",{key:tab,className:`tab ${activeTab===tab?"active":""}`,onClick:()=>setActiveTab(tab)},
-              tab==="collection"?"Colección":"Estadísticas")
-          )
+          ...["collection","stats"].map(tab=>e("button",{key:tab,className:`tab ${activeTab===tab?"active":""}`,onClick:()=>setActiveTab(tab)},tab==="collection"?"Colección":"Estadísticas"))
         )
       )
     ),
-
-    // Collection filters (only when on collection tab)
     activeTab==="collection"&&e("div",{style:{borderBottom:"1px solid #1a1a28",padding:"12px 24px",background:"rgba(10,10,20,0.95)"}},
       e("div",{style:{maxWidth:1500,margin:"0 auto",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}},
         e("input",{style:{...inputBase,flex:1,minWidth:180},placeholder:"Buscar artista, título, sello, ID...",value:search,onChange:ev=>setSearch(ev.target.value)}),
@@ -499,24 +504,23 @@ function App(){
         )
       )
     ),
-
-    // Content
     e("div",{style:{maxWidth:1500,margin:"0 auto",padding:"20px 24px"}},
       activeTab==="stats"
-        ? e(StatsTab,{cds})
-        : filtered.length===0
-          ? e("div",{style:{textAlign:"center",padding:80,color:"#2a2a40"}},e("div",{style:{fontSize:"3rem",marginBottom:12}},"◉"),"Sin resultados")
-          : view==="grid"
-            ? e("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(158px,1fr))",gap:14}},
-                ...filtered.map(cd=>e(CDCard,{key:cd.cdId,cd,onEdit:setModal,onDelete:deleteCd})))
-            : e("div",{style:{background:"#10101c",border:"1px solid #1a1a28",borderRadius:10,overflow:"hidden"}},
+        ?e(StatsTab,{cds})
+        :filtered.length===0
+          ?e("div",{style:{textAlign:"center",padding:80,color:"#2a2a40"}},e("div",{style:{fontSize:"3rem",marginBottom:12}},"◉"),"Sin resultados")
+          :view==="grid"
+            ?e("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(158px,1fr))",gap:14}},
+                ...filtered.map(cd=>e(CDCard,{key:cd.cdId,cd,onEdit:handleEdit,onDelete:deleteCd,onSelect:setSelectedCd})))
+            :e("div",{style:{background:"#10101c",border:"1px solid #1a1a28",borderRadius:10,overflow:"hidden"}},
                 e("div",{style:{display:"grid",gridTemplateColumns:"44px 80px 1fr 120px 55px 80px 95px 75px 70px",gap:10,padding:"9px 16px",borderBottom:"1px solid #1a1a28"}},
                   ...["","ID","Artista / Título","Sello","Año","Categoría","Estado","Valor",""].map((h,i)=>e("div",{key:i,style:{fontSize:"0.6rem",color:"#2a2a45",textTransform:"uppercase",letterSpacing:"0.12em"}},h))
                 ),
-                ...filtered.map(cd=>e(CDRow,{key:cd.cdId,cd,onEdit:setModal,onDelete:deleteCd}))
+                ...filtered.map(cd=>e(CDRow,{key:cd.cdId,cd,onEdit:handleEdit,onDelete:deleteCd,onSelect:setSelectedCd}))
               ),
       activeTab==="collection"&&e("div",{style:{textAlign:"center",marginTop:20,fontSize:"0.62rem",color:"#1e1e30"}},`${filtered.length} de ${cds.length} discos`)
     ),
+    selectedCd&&e(CDPopup,{cd:selectedCd,onClose:()=>setSelectedCd(null),onEdit:handleEdit}),
     modal&&e(CDModal,{cd:modal==="add"?null:modal,onSave:saveCd,onClose:()=>setModal(null)})
   );
 }
