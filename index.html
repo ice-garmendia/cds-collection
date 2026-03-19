@@ -130,7 +130,7 @@ function CDPopup({cd, onClose, onEdit}){
       e("div",{style:{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}},
 
         // Photo top — rectangular centered
-        e("div",{style:{width:"100%",height:300,flexShrink:0,background:"#060610",position:"relative",overflow:"hidden"}},
+        e("div",{style:{width:"100%",height:420,flexShrink:0,background:"#060610",position:"relative",overflow:"hidden"}},
           cd.photos&&cd.photos.length>0
             ? e("div",{style:{position:"absolute",inset:0}}, e(Carousel,{cd,size:"large"}))
             : e("div",{style:{position:"absolute",inset:0}}, e(Placeholder,{artist:cd.artist,album:cd.album,large:true}))
