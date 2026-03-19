@@ -358,8 +358,8 @@ function TreeView({cds,onSelect}){
         if(!cCds.length) return;
         out[artist][cat]={};
         const titles=[...new Set(cCds.map(c=>c.album))].sort((a,b)=>{
-          const minA=Math.min(...cCds.filter(c=>c.album===a).map(c=>c.issueYear||c.year||9999));
-          const minB=Math.min(...cCds.filter(c=>c.album===b).map(c=>c.issueYear||c.year||9999));
+          const minA=Math.min(...cCds.filter(c=>c.album===a).map(c=>c.year||9999));
+          const minB=Math.min(...cCds.filter(c=>c.album===b).map(c=>c.year||9999));
           return minA-minB;
         });
         titles.forEach(title=>{
