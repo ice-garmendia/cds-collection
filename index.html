@@ -308,7 +308,7 @@ function CDPopup({cd,onClose,onEdit}){
           h("div",{style:{height:1,background:"rgba(255,255,255,0.08)"}}),
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px"}},
             ...[
-              [t.issueYear, cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
+              [t.issueYear, cd.issueYear||cd.year||"—"],
               [t.country,   cd.country||"—"],
               [t.label,     cd.label||"—"],
               [t.type,      cd.type||"—"],
