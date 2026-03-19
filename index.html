@@ -122,7 +122,7 @@ function Carousel({cd,size="small"}){
   if(valid.length===0) return e(Placeholder,{artist:cd.artist,album:cd.album,large:isLarge});
   const cur=valid[Math.min(idx,valid.length-1)];
 
-  return e("div",{style:{width:"100%",paddingBottom:isLarge?"0":"100%",height:isLarge?"100%":"auto",minHeight:isLarge?"380px":"auto",position:isLarge?"absolute":"relative",inset:isLarge?"0":"auto",borderRadius:isLarge?"8px":"4px 4px 0 0",overflow:"hidden",background:"#080810"}},
+  return e("div",{style:{width:"100%",paddingBottom:isLarge?"0":"100%",height:isLarge?"100%":"auto",minHeight:isLarge?"300px":"auto",position:isLarge?"absolute":"relative",inset:isLarge?"0":"auto",borderRadius:isLarge?"10px":"4px 4px 0 0",overflow:"hidden",background:"transparent"}},
     photos.map(type=>e("img",{key:type,src:photoUrl(cd.cdId,type),style:{display:"none"},onLoad:()=>setLoaded(l=>({...l,[type]:true})),onError:()=>setErrors(er=>({...er,[type]:true}))})),
     e("img",{key:cur,src:photoUrl(cd.cdId,cur),alt:`${cd.album}-${cur}`,style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:isLarge?"contain":"cover",transition:"opacity 0.25s",opacity:loaded[cur]?1:0}}),
     valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i-1+valid.length)%valid.length)},style:{position:"absolute",left:isLarge?10:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"white",width:isLarge?36:22,height:isLarge?36:22,borderRadius:"50%",cursor:"pointer",fontSize:isLarge?"1.1rem":"0.85rem",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",zIndex:2}},"‹"),
@@ -156,103 +156,171 @@ function Badge({label,color}){
 function CDPopup({cd, onClose, onEdit}){
   const ac = getArtistColor(cd.artist);
   const condColor = CONDITION_COLORS[cd.condition]||"#7c7c9e";
-
-  const fields = [
-    ["ID", cd.cdId],
-    ["Artista", cd.artist],
-    ["Título", cd.album],
-    [t.sortYear, cd.year||"—"],
-    [t.issueYearField, cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
-    [t.labelField, cd.label||"—"],
-    [t.countryField, cd.country||"—"],
-    [t.categoryField, cd.genre||"—"],
-    [t.typeField, cd.type||"—"],
-    ["Variante", cd.variety||"—"],
-    ["Estado (media)", cd.condition||"—"],
-    ["Estado (artwork)", cd.artworkCondition||"—"],
-    ["Valor estimado", cd.estimatedValue?`€${cd.estimatedValue.toLocaleString()}`:"—"],
-    [t.notesField, cd.notes||"—"],
-  ].filter(([,v])=>v&&v!=="—");
+  const firstPhoto = cd.photos&&cd.photos.length>0 ? photoUrl(cd.cdId, cd.photos[0]) : null;
 
   return e("div",{
     onClick:onClose,
-    style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(8px)"}},
+    style:{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:24,
+      background:"rgba(0,0,0,0.7)",backdropFilter:"blur(6px)"}},
+
     e("div",{
-      className:"popup-inner",
       onClick:ev=>ev.stopPropagation(),
-      style:{background:"#10101c",border:`1px solid ${ac}33`,borderRadius:16,width:"100%",maxWidth:520,maxHeight:"88vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:`0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px ${ac}22`}},
+      className:"popup-inner",
+      style:{
+        position:"relative", width:"100%", maxWidth:900, height:"min(580px,88vh)",
+        borderRadius:20, overflow:"hidden",
+        boxShadow:`0 40px 120px rgba(0,0,0,0.9), 0 0 0 1px ${ac}44`,
+      }},
 
-      // Top: close button
-      e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 20px",borderBottom:"1px solid #1a1a28",flexShrink:0}},
-        e("div",{style:{fontSize:"0.62rem",color:"#3a3a5a",letterSpacing:"0.1em"}},cd.cdId),
-        e("div",{style:{display:"flex",gap:8}},
-          e("button",{onClick:()=>onEdit(cd),style:{background:"#1e1e35",border:"1px solid #3a3a5a",color:"#9090c0",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.72rem"}},t.edit),
-          e("button",{onClick:onClose,style:{background:"transparent",border:"none",color:"#5a5a7a",fontSize:"1.3rem",cursor:"pointer",lineHeight:1,padding:"0 4px"}},"✕")
-        )
-      ),
+      // ── Layer 1: blurred background photo ──
+      firstPhoto && e("div",{style:{
+        position:"absolute", inset:0, zIndex:0,
+        backgroundImage:`url(${firstPhoto})`,
+        backgroundSize:"cover", backgroundPosition:"center",
+        filter:"blur(28px) brightness(0.35) saturate(1.4)",
+        transform:"scale(1.1)",
+      }}),
 
-      // Body: photo top, info bottom
-      e("div",{style:{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}},
+      // ── Layer 2: artist color gradient overlay ──
+      e("div",{style:{
+        position:"absolute", inset:0, zIndex:1,
+        background:`linear-gradient(105deg, ${ac}22 0%, transparent 50%, rgba(0,0,0,0.6) 100%)`,
+      }}),
 
-        // Photo top — rectangular centered
-        e("div",{style:{width:"100%",height:420,flexShrink:0,background:"#060610",position:"relative",overflow:"hidden"}},
+      // ── Layer 3: dark base if no photo ──
+      !firstPhoto && e("div",{style:{
+        position:"absolute", inset:0, zIndex:0,
+        background:`linear-gradient(135deg, ${ac}33, #0a0a14)`,
+      }}),
+
+      // ── Close button ──
+      e("button",{onClick:onClose,style:{
+        position:"absolute", top:16, right:16, zIndex:10,
+        background:"rgba(0,0,0,0.4)", border:"none", color:"rgba(255,255,255,0.7)",
+        width:32, height:32, borderRadius:"50%", cursor:"pointer",
+        fontSize:"1rem", backdropFilter:"blur(8px)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+      }},"✕"),
+
+      // ── Main content: photo left + info right ──
+      e("div",{style:{
+        position:"relative", zIndex:2,
+        display:"flex", height:"100%",
+      }},
+
+        // LEFT: photo
+        e("div",{style:{
+          width:"45%", flexShrink:0, display:"flex",
+          alignItems:"center", justifyContent:"center",
+          padding:24, position:"relative",
+        }},
           cd.photos&&cd.photos.length>0
-            ? e("div",{style:{position:"absolute",inset:0}}, e(Carousel,{cd,size:"large"}))
-            : e("div",{style:{position:"absolute",inset:0}}, e(Placeholder,{artist:cd.artist,album:cd.album,large:true}))
+            ? e("div",{style:{width:"100%",height:"100%",position:"relative"}},
+                e(Carousel,{cd,size:"large"})
+              )
+            : e("div",{style:{
+                width:"100%", height:"100%", display:"flex",
+                alignItems:"center", justifyContent:"center",
+              }},
+                e("div",{style:{
+                  fontSize:"5rem", fontWeight:900,
+                  fontFamily:"'Playfair Display',serif",
+                  color:"rgba(255,255,255,0.15)",
+                }}, cd.artist.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase())
+              )
         ),
 
-        // Info bottom — scrollable
-        e("div",{style:{flex:1,overflowY:"auto",padding:"18px 24px",display:"flex",flexDirection:"column",gap:14,borderTop:"1px solid #1a1a28"}},
+        // RIGHT: info — no scroll, fits in height
+        e("div",{style:{
+          flex:1, display:"flex", flexDirection:"column",
+          justifyContent:"center", padding:"28px 32px 28px 8px",
+          gap:16,
+        }},
 
-          // Title + value
-          e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:16}},
-            e("div",{style:{flex:1}},
-              e("div",{style:{fontSize:"0.62rem",color:ac,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:600,marginBottom:3}},cd.artist),
-              e("h2",{style:{fontFamily:"'Playfair Display',serif",fontSize:"1.35rem",fontWeight:900,color:"#ffffff",lineHeight:1.2}},cd.album),
-              cd.year>0&&e("div",{style:{fontSize:"0.68rem",color:"#5a5a7a",fontFamily:"'DM Mono',monospace",marginTop:4}},cd.year)
-            ),
-            cd.estimatedValue>0&&e("div",{style:{textAlign:"right",flexShrink:0}},
-              e("div",{style:{fontSize:"0.52rem",color:"#4a4a2a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}},"Valor estimado"),
-              e("div",{style:{fontSize:"1.25rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"#fbbf24"}},`€${cd.estimatedValue.toLocaleString()}`)
-            )
+          // ID chip
+          e("div",{style:{
+            fontSize:"0.6rem", color:"rgba(255,255,255,0.35)",
+            fontFamily:"'DM Mono',monospace", letterSpacing:"0.12em",
+          }}, cd.cdId),
+
+          // Artist + Title
+          e("div",null,
+            e("div",{style:{
+              fontSize:"0.7rem", color:ac, textTransform:"uppercase",
+              letterSpacing:"0.12em", fontWeight:700, marginBottom:4,
+              textShadow:`0 0 20px ${ac}`,
+            }}, cd.artist),
+            e("h2",{style:{
+              fontFamily:"'Playfair Display',serif",
+              fontSize:"clamp(1.1rem,2.2vw,1.6rem)",
+              fontWeight:900, color:"#ffffff", lineHeight:1.15,
+              textShadow:"0 2px 20px rgba(0,0,0,0.8)",
+              marginBottom:4,
+            }}, cd.album),
+            cd.year>0&&e("div",{style:{
+              fontSize:"0.72rem", color:"rgba(255,255,255,0.4)",
+              fontFamily:"'DM Mono',monospace",
+            }}, cd.year)
           ),
 
           // Badges
-          e("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
+          e("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
             cd.condition&&e(Badge,{label:cd.condition,color:condColor}),
             cd.type==="Promo"&&e(Badge,{label:"PROMO",color:"#f59e0b"}),
-            cd.genre&&e(Badge,{label:cd.genre,color:"#6366f1"}),
-            cd.variety==="Variant"&&e(Badge,{label:"Variante",color:"#ec4899"}),
-            cd.photos&&cd.photos.length>0&&e(Badge,{label:`◉ ${cd.photos.length} foto${cd.photos.length>1?"s":""}`,color:"#4ade80"})
+            cd.genre&&e(Badge,{label:cd.genre,color:ac}),
+            cd.variety==="Variant"&&e(Badge,{label:"Variante",color:"#ec4899"})
           ),
 
-          // Data grid 4 cols
-          e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"8px 12px",background:"#0d0d1a",borderRadius:8,padding:"12px 14px"}},
+          // Divider
+          e("div",{style:{height:1,background:"rgba(255,255,255,0.08)"}}),
+
+          // Data grid — 2 cols, compact
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px"}},
             ...[
-              [t.sortIssue, cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
-              [t.countryField, cd.country||"—"],
-              [t.labelField, cd.label||"—"],
-              [t.typeField, cd.type||"—"],
-              ["Presentación", cd.categoryCase||"—"],
-              ["Artwork", cd.artworkCondition||"—"],
+              [t.issueYear, cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
+              [t.country, cd.country||"—"],
+              [t.label, cd.label||"—"],
+              [t.type, cd.type||"—"],
+              [t.presentation, cd.categoryCase||"—"],
+              [t.artwork, cd.artworkCondition||"—"],
             ].map(([label,val])=>
               e("div",{key:label},
-                e("div",{style:{fontSize:"0.52rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}},label),
-                e("div",{style:{fontSize:"0.75rem",color:"#c0c0d8",fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},String(val))
+                e("div",{style:{fontSize:"0.52rem",color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}},label),
+                e("div",{style:{fontSize:"0.78rem",color:"rgba(255,255,255,0.85)",fontWeight:500}},String(val))
               )
             )
           ),
 
-          // Notes
-          cd.notes&&e("div",{style:{background:"#0d0d1a",border:"1px solid #1a1a28",borderRadius:8,padding:"10px 14px"}},
-            e("div",{style:{fontSize:"0.52rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}},t.notesField),
-            e("div",{style:{fontSize:"0.74rem",color:"#9090b0",lineHeight:1.6}},cd.notes)
-          )
+          // Value + notes
+          e("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}},
+            cd.estimatedValue>0&&e("div",null,
+              e("div",{style:{fontSize:"0.52rem",color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}},t.estimatedValue),
+              e("div",{style:{fontSize:"1.5rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"#fbbf24",textShadow:"0 0 20px rgba(251,191,36,0.4)"}}
+              ,`€${cd.estimatedValue.toLocaleString()}`)
+            ),
+            e("button",{onClick:()=>onEdit(cd),style:{
+              background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)",
+              color:"rgba(255,255,255,0.7)", borderRadius:8,
+              padding:"8px 16px", cursor:"pointer",
+              fontFamily:"'DM Mono',monospace", fontSize:"0.72rem",
+              backdropFilter:"blur(8px)", transition:"all 0.2s",
+            }}, t.edit)
+          ),
+
+          // Notes if exists
+          cd.notes&&e("div",{style:{
+            fontSize:"0.7rem", color:"rgba(255,255,255,0.4)",
+            lineHeight:1.5, fontStyle:"italic",
+            borderLeft:`2px solid ${ac}66`, paddingLeft:10,
+            overflow:"hidden", maxHeight:48,
+            display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical",
+          }}, cd.notes)
         )
       )
     )
   );
 }
+
 
 // ── STATS ─────────────────────────────────────────────────
 function groupBy(arr,key){return arr.reduce((acc,item)=>{const k=item[key]||"Sin datos";acc[k]=(acc[k]||0)+1;return acc;},{})}
