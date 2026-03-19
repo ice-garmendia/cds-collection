@@ -34,7 +34,7 @@ const ALL_CDS = [{"artist":"Brian May","album":"The Business","year":1998,"issue
 // ── CONSTANTS ─────────────────────────────────────────────
 const CATEGORIES = [...new Set(ALL_CDS.map(c=>c.genre).filter(Boolean))].sort();
 const CONDITIONS  = ["Sellado","Nuevo","Muy bueno","Bueno","Regular"];
-const ARTISTS     = [...new Set(ALL_CDS.map(c=>c.artist))].sort();
+const ARTISTS = ["Queen","Freddie Mercury","Brian May","Roger Taylor","The Cross","Smile","Queen+"];
 const COND_COLOR  = {Sellado:"#4ade80",Nuevo:"#86efac","Muy bueno":"#fbbf24",Bueno:"#fb923c",Regular:"#f87171"};
 const ART_COLOR   = {Queen:"#e63946","Freddie Mercury":"#f4a261","Brian May":"#457b9d","Roger Taylor":"#2a9d8f","Queen+":"#9b5de5","The Cross":"#f15bb5",Smile:"#00bbf9"};
 const CHART_COLS  = ["#e63946","#f4a261","#457b9d","#2a9d8f","#9b5de5","#f15bb5","#00bbf9","#fbbf24","#4ade80","#fb923c","#f87171","#a78bfa","#34d399","#60a5fa","#f472b6","#facc15","#38bdf8","#fb7185","#a3e635","#c084fc"];
@@ -346,11 +346,23 @@ function TreeView({cds,onSelect}){
       const aCds=cds.filter(c=>c.artist===artist);
       if(!aCds.length) return;
       out[artist]={};
-      const cats=[...new Set(aCds.map(c=>c.genre.replace(" · Live","")))].sort();
+      // Group CD3/CD5/CD5 Enhanced into "Singles"
+      const SINGLES_CATS = ["CD3","CD5","CD5 Enhanced","CD3 · Live","CD5 · Live"];
+      const rawCats=[...new Set(aCds.map(c=>c.genre.replace(" · Live","")))];
+      const hasSingles = rawCats.some(c=>SINGLES_CATS.includes(c)||SINGLES_CATS.includes(c+" · Live"));
+      const cats=[...new Set(rawCats.map(c=>SINGLES_CATS.includes(c)?"Singles":c))].sort();
       cats.forEach(cat=>{
-        const cCds=aCds.filter(c=>c.genre.replace(" · Live","")=== cat);
+        const cCds = cat==="Singles"
+          ? aCds.filter(c=>SINGLES_CATS.includes(c.genre.replace(" · Live",""))||SINGLES_CATS.includes(c.genre))
+          : aCds.filter(c=>c.genre.replace(" · Live","")=== cat && !SINGLES_CATS.includes(c.genre.replace(" · Live","")));
+        if(!cCds.length) return;
         out[artist][cat]={};
-        const titles=[...new Set(cCds.map(c=>c.album))].sort();
+        // Sort titles by earliest issueYear of their discs
+        const titles=[...new Set(cCds.map(c=>c.album))].sort((a,b)=>{
+          const minA=Math.min(...cCds.filter(c=>c.album===a).map(c=>c.issueYear||c.year||9999));
+          const minB=Math.min(...cCds.filter(c=>c.album===b).map(c=>c.issueYear||c.year||9999));
+          return minA-minB;
+        });
         titles.forEach(title=>{
           out[artist][cat][title]=cCds.filter(c=>c.album===title)
             .sort((a,b)=>(a.issueYear||0)-(b.issueYear||0));
