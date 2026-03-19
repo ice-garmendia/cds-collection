@@ -37,7 +37,72 @@ const CONDITION_COLORS = {"Sellado":"#4ade80","Nuevo":"#86efac","Muy bueno":"#fb
 const ARTIST_PALETTE = {"Queen":"#e63946","Freddie Mercury":"#f4a261","Brian May":"#457b9d","Roger Taylor":"#2a9d8f","Queen+":"#9b5de5","The Cross":"#f15bb5","Smile":"#00bbf9"};
 const PHOTO_TYPES = ["front","back","cd","obi","insert"];
 const PHOTO_LABELS = {front:"Tapa",back:"Contratapa",cd:"Disco",obi:"OBI",insert:"Insert"};
-const CHART_COLORS = ["#e63946","#f4a261","#457b9d","#2a9d8f","#9b5de5","#f15bb5","#00bbf9","#fbbf24","#4ade80","#fb923c","#f87171","#a78bfa","#34d399","#60a5fa","#f472b6","#facc15","#38bdf8","#fb7185","#a3e635","#c084fc"];
+
+const T = {
+  es: {
+    title:"Mi Colección", subtitle:"CD LIBRARY",
+    records:"discos", artists:"artistas", variants:"variantes",
+    promos:"promos", withPhotos:"con fotos", totalValue:"valor total",
+    collection:"Colección", statistics:"Estadísticas",
+    search:"Buscar artista, título, sello, ID...",
+    allArtists:"Todos los artistas", allCategories:"Todas las categorías",
+    allConditions:"Todos los estados", allTypes:"Commercial + Promo",
+    onlyCommercial:"Solo Commercial", onlyPromo:"Solo Promo",
+    sortArtist:"Artista A–Z", sortTitle:"Título A–Z", sortId:"ID (valor ↓)",
+    sortYear:"Año original", sortIssue:"Año edición", sortValue:"Valor ↓",
+    addCd:"+ Agregar CD", edit:"Editar", delete:"Eliminar",
+    cancel:"Cancelar", save:"Guardar cambios", add:"Agregar",
+    noResults:"Sin resultados", of:"de",
+    originalYear:"Año orig.", issueYear:"Año edición", country:"País",
+    label:"Sello", type:"Tipo", presentation:"Presentación",
+    artwork:"Artwork", estimatedValue:"Valor estimado", notes:"Notas",
+    condition:"Estado", id:"ID",
+    totalRecords:"Discos", avgValue:"Valor promedio", perDisc:"por disco",
+    mostValuable:"Más valioso", withPhotosStat:"Con fotos",
+    countries:"Países", byCountry:"Discos por país",
+    commVsPromo:"Commercial vs Promo", byArtist:"Discos por artista",
+    valueByArtist:"Valor estimado por artista", byCategory:"Discos por categoría",
+    artistCategory:"Artista × Categoría", artist:"Artista", total:"Total",
+    front:"Tapa", back:"Contratapa", disc:"Disco", obi:"OBI", insert:"Insert",
+    editCd:"Editar CD", addCdModal:"Agregar CD", artistField:"Artista *",
+    titleField:"Título *", origYear:"Año original", issueYearField:"Año de edición",
+    labelField:"Sello", countryField:"País", categoryField:"Categoría",
+    conditionField:"Estado", typeField:"Tipo", valueField:"Valor estimado (€)",
+    photosField:"Fotos en GitHub", notesField:"Notas", selectOne:"— Seleccionar —",
+  },
+  en: {
+    title:"My Collection", subtitle:"CD LIBRARY",
+    records:"records", artists:"artists", variants:"variants",
+    promos:"promos", withPhotos:"with photos", totalValue:"total value",
+    collection:"Collection", statistics:"Statistics",
+    search:"Search artist, title, label, ID...",
+    allArtists:"All artists", allCategories:"All categories",
+    allConditions:"All conditions", allTypes:"Commercial + Promo",
+    onlyCommercial:"Commercial only", onlyPromo:"Promo only",
+    sortArtist:"Artist A–Z", sortTitle:"Title A–Z", sortId:"ID (value ↓)",
+    sortYear:"Original year", sortIssue:"Issue year", sortValue:"Value ↓",
+    addCd:"+ Add CD", edit:"Edit", delete:"Delete",
+    cancel:"Cancel", save:"Save changes", add:"Add",
+    noResults:"No results", of:"of",
+    originalYear:"Orig. year", issueYear:"Issue year", country:"Country",
+    label:"Label", type:"Type", presentation:"Presentation",
+    artwork:"Artwork", estimatedValue:"Est. value", notes:"Notes",
+    condition:"Condition", id:"ID",
+    totalRecords:"Records", avgValue:"Avg. value", perDisc:"per record",
+    mostValuable:"Most valuable", withPhotosStat:"With photos",
+    countries:"Countries", byCountry:"Records by country",
+    commVsPromo:"Commercial vs Promo", byArtist:"Records by artist",
+    valueByArtist:"Est. value by artist", byCategory:"Records by category",
+    artistCategory:"Artist × Category", artist:"Artist", total:"Total",
+    front:"Front", back:"Back", disc:"Disc", obi:"OBI", insert:"Insert",
+    editCd:"Edit CD", addCdModal:"Add CD", artistField:"Artist *",
+    titleField:"Title *", origYear:"Original year", issueYearField:"Issue year",
+    labelField:"Label", countryField:"Country", categoryField:"Category",
+    conditionField:"Condition", typeField:"Type", valueField:"Est. value (€)",
+    photosField:"Photos on GitHub", notesField:"Notes", selectOne:"— Select —",
+  }
+};
+var t = T.es;
 
 function getArtistColor(a){return ARTIST_PALETTE[a]||"#7c7c9e"}
 function photoUrl(cdId,type){return `${GITHUB_BASE}/${cdId}/${type}.jpg`}
@@ -63,7 +128,7 @@ function Carousel({cd,size="small"}){
     valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i-1+valid.length)%valid.length)},style:{position:"absolute",left:isLarge?10:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"white",width:isLarge?36:22,height:isLarge?36:22,borderRadius:"50%",cursor:"pointer",fontSize:isLarge?"1.1rem":"0.85rem",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",zIndex:2}},"‹"),
     valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i+1)%valid.length)},style:{position:"absolute",right:isLarge?10:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"white",width:isLarge?36:22,height:isLarge?36:22,borderRadius:"50%",cursor:"pointer",fontSize:isLarge?"1.1rem":"0.85rem",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",zIndex:2}},"›"),
     e("div",{style:{position:"absolute",bottom:isLarge?12:6,left:0,right:0,display:"flex",flexDirection:"column",alignItems:"center",gap:4}},
-      e("div",{style:{fontSize:isLarge?"0.62rem":"0.5rem",color:"rgba(255,255,255,0.8)",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.08em",background:"rgba(0,0,0,0.5)",padding:isLarge?"3px 10px":"1px 6px",borderRadius:4,backdropFilter:"blur(4px)"}},PHOTO_LABELS[cur]),
+      e("div",{style:{fontSize:isLarge?"0.62rem":"0.5rem",color:"rgba(255,255,255,0.8)",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.08em",background:"rgba(0,0,0,0.5)",padding:isLarge?"3px 10px":"1px 6px",borderRadius:4,backdropFilter:"blur(4px)"}},({front:t.front,back:t.back,cd:t.disc,obi:t.obi,insert:t.insert})[cur]||cur),
       valid.length>1&&e("div",{style:{display:"flex",gap:5}},
         valid.map((_,i)=>e("button",{key:i,onClick:ev=>{ev.stopPropagation();setIdx(i)},style:{width:i===idx?isLarge?"18px":"14px":isLarge?"6px":"5px",height:isLarge?6:5,borderRadius:3,background:i===idx?"white":"rgba(255,255,255,0.35)",border:"none",cursor:"pointer",padding:0,transition:"all 0.2s"}}))
       )
@@ -96,17 +161,17 @@ function CDPopup({cd, onClose, onEdit}){
     ["ID", cd.cdId],
     ["Artista", cd.artist],
     ["Título", cd.album],
-    ["Año original", cd.year||"—"],
-    ["Año de edición", cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
-    ["Sello", cd.label||"—"],
-    ["País", cd.country||"—"],
-    ["Categoría", cd.genre||"—"],
-    ["Tipo", cd.type||"—"],
+    [t.sortYear, cd.year||"—"],
+    [t.issueYearField, cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
+    [t.labelField, cd.label||"—"],
+    [t.countryField, cd.country||"—"],
+    [t.categoryField, cd.genre||"—"],
+    [t.typeField, cd.type||"—"],
     ["Variante", cd.variety||"—"],
     ["Estado (media)", cd.condition||"—"],
     ["Estado (artwork)", cd.artworkCondition||"—"],
     ["Valor estimado", cd.estimatedValue?`€${cd.estimatedValue.toLocaleString()}`:"—"],
-    ["Notas", cd.notes||"—"],
+    [t.notesField, cd.notes||"—"],
   ].filter(([,v])=>v&&v!=="—");
 
   return e("div",{
@@ -121,7 +186,7 @@ function CDPopup({cd, onClose, onEdit}){
       e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 20px",borderBottom:"1px solid #1a1a28",flexShrink:0}},
         e("div",{style:{fontSize:"0.62rem",color:"#3a3a5a",letterSpacing:"0.1em"}},cd.cdId),
         e("div",{style:{display:"flex",gap:8}},
-          e("button",{onClick:()=>onEdit(cd),style:{background:"#1e1e35",border:"1px solid #3a3a5a",color:"#9090c0",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.72rem"}},"Editar"),
+          e("button",{onClick:()=>onEdit(cd),style:{background:"#1e1e35",border:"1px solid #3a3a5a",color:"#9090c0",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.72rem"}},t.edit),
           e("button",{onClick:onClose,style:{background:"transparent",border:"none",color:"#5a5a7a",fontSize:"1.3rem",cursor:"pointer",lineHeight:1,padding:"0 4px"}},"✕")
         )
       ),
@@ -164,10 +229,10 @@ function CDPopup({cd, onClose, onEdit}){
           // Data grid 4 cols
           e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"8px 12px",background:"#0d0d1a",borderRadius:8,padding:"12px 14px"}},
             ...[
-              ["Año edición", cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
-              ["País", cd.country||"—"],
-              ["Sello", cd.label||"—"],
-              ["Tipo", cd.type||"—"],
+              [t.sortIssue, cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
+              [t.countryField, cd.country||"—"],
+              [t.labelField, cd.label||"—"],
+              [t.typeField, cd.type||"—"],
               ["Presentación", cd.categoryCase||"—"],
               ["Artwork", cd.artworkCondition||"—"],
             ].map(([label,val])=>
@@ -180,7 +245,7 @@ function CDPopup({cd, onClose, onEdit}){
 
           // Notes
           cd.notes&&e("div",{style:{background:"#0d0d1a",border:"1px solid #1a1a28",borderRadius:8,padding:"10px 14px"}},
-            e("div",{style:{fontSize:"0.52rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}},"Notas"),
+            e("div",{style:{fontSize:"0.52rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}},t.notesField),
             e("div",{style:{fontSize:"0.74rem",color:"#9090b0",lineHeight:1.6}},cd.notes)
           )
         )
@@ -262,7 +327,7 @@ function StatsTab({cds}){
 
   return e("div",{style:{display:"flex",flexDirection:"column",gap:16}},
     e("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12}},
-      ...[["Discos",cds.length,"#9090c8"],["Valor total",`€${totalValue.toLocaleString()}`,"#fbbf24"],["Valor promedio",`€${avgValue.toFixed(0)}`,"#fbbf24","por disco"],["Más valioso",`€${topValue.toLocaleString()}`,"#4ade80",topCd?.album.slice(0,18)],["Promos",promos,"#f59e0b",`${((promos/cds.length)*100).toFixed(1)}%`],["Variantes",variants,"#ec4899"],["Con fotos",withPhotos,"#4ade80",`de ${cds.length}`],["Países",Object.keys(byCountry).length,"#9090c8"]].map(([label,value,color,sub])=>
+      ...[[t.totalRecords,cds.length,"#9090c8"],[t.totalValue,`€${totalValue.toLocaleString()}`,"#fbbf24"],[t.avgValue,`€${avgValue.toFixed(0)}`,"#fbbf24",t.perDisc],[t.mostValuable,`€${topValue.toLocaleString()}`,"#4ade80",topCd?.album.slice(0,18)],["Promos",promos,"#f59e0b",`${((promos/cds.length)*100).toFixed(1)}%`],[t.variants,variants,"#ec4899"],[t.withPhotosStat,withPhotos,"#4ade80",`${t.of} ${cds.length}`],[t.countries,Object.keys(byCountry).length,"#9090c8"]].map(([label,value,color,sub])=>
         e("div",{key:label,style:{background:"#10101c",border:"1px solid #1a1a28",borderRadius:10,padding:"14px 16px",textAlign:"center"}},
           e("div",{style:{fontSize:"1.4rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color}},value),
           e("div",{style:{fontSize:"0.6rem",color:"#5a5a7a",marginTop:2,textTransform:"uppercase",letterSpacing:"0.08em"}},label),
@@ -271,22 +336,22 @@ function StatsTab({cds}){
       )
     ),
     e("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr",gap:16}},
-      e(StatCard,{title:"Discos por país"},e(BarChart,{data:byCountry,color:CHART_COLORS,maxItems:20})),
-      e(StatCard,{title:"Commercial vs Promo"},e(DonutChart,{data:byType,colors:["#6366f1","#f59e0b"]}))
+      e(StatCard,{title:t.byCountry},e(BarChart,{data:byCountry,color:CHART_COLORS,maxItems:20})),
+      e(StatCard,{title:t.commVsPromo},e(DonutChart,{data:byType,colors:["#6366f1","#f59e0b"]}))
     ),
     e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
-      e(StatCard,{title:"Discos por artista"},e(BarChart,{data:byArtist,color:ARTISTS.map(a=>getArtistColor(a)),maxItems:10})),
-      e(StatCard,{title:"Valor estimado por artista"},e(BarChart,{data:Object.fromEntries(Object.entries(valueByArtist).map(([k,v])=>[k,Math.round(v)])),color:ARTISTS.map(a=>getArtistColor(a)),valuePrefix:"€",maxItems:10}))
+      e(StatCard,{title:t.byArtist},e(BarChart,{data:byArtist,color:ARTISTS.map(a=>getArtistColor(a)),maxItems:10})),
+      e(StatCard,{title:t.valueByArtist},e(BarChart,{data:Object.fromEntries(Object.entries(valueByArtist).map(([k,v])=>[k,Math.round(v)])),color:ARTISTS.map(a=>getArtistColor(a)),valuePrefix:"€",maxItems:10}))
     ),
     e("div",{style:{display:"grid",gridTemplateColumns:"1fr 2fr",gap:16}},
-      e(StatCard,{title:"Discos por categoría"},e(DonutChart,{data:byCategory,colors:CHART_COLORS})),
-      e(StatCard,{title:"Artista × Categoría"},
+      e(StatCard,{title:t.byCategory},e(DonutChart,{data:byCategory,colors:CHART_COLORS})),
+      e(StatCard,{title:t.artistCategory},
         e("div",{style:{overflowX:"auto"}},
           e("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:"0.68rem"}},
             e("thead",null,e("tr",null,
-              e("th",{style:{textAlign:"left",color:"#3a3a5a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",fontSize:"0.6rem",textTransform:"uppercase"}},"Artista"),
+              e("th",{style:{textAlign:"left",color:"#3a3a5a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",fontSize:"0.6rem",textTransform:"uppercase"}},t.artist),
               ...CATEGORIES.slice(0,10).map(cat=>e("th",{key:cat,style:{color:"#3a3a5a",padding:"4px 6px",borderBottom:"1px solid #1a1a28",fontSize:"0.58rem",textTransform:"uppercase",textAlign:"center",whiteSpace:"nowrap"}},cat.slice(0,8))),
-              e("th",{style:{color:"#5a5a7a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",textAlign:"center",fontSize:"0.6rem"}},"Total")
+              e("th",{style:{color:"#5a5a7a",padding:"4px 8px",borderBottom:"1px solid #1a1a28",textAlign:"center",fontSize:"0.6rem"}},t.total)
             )),
             e("tbody",null,...ARTISTS.map(artist=>{
               const ac=getArtistColor(artist);
@@ -329,8 +394,8 @@ function CDCard({cd,onEdit,onDelete,onSelect}){
       ),
       cd.estimatedValue>0&&e("div",{style:{fontSize:"0.72rem",color:"#fbbf24",marginTop:5}},`€${cd.estimatedValue.toLocaleString()}`),
       hovered&&e("div",{style:{display:"flex",gap:6,marginTop:8}},
-        e("button",{onClick:ev=>{ev.stopPropagation();onEdit(cd)},style:{flex:1,background:"#22223a",border:"1px solid #3a3a5a",color:"#9090c0",borderRadius:4,padding:4,fontSize:"0.68rem",cursor:"pointer"}},"Editar"),
-        e("button",{onClick:ev=>{ev.stopPropagation();onDelete(cd.cdId)},style:{flex:1,background:"#221a1a",border:"1px solid #5a3a3a",color:"#c08080",borderRadius:4,padding:4,fontSize:"0.68rem",cursor:"pointer"}},"Eliminar")
+        e("button",{onClick:ev=>{ev.stopPropagation();onEdit(cd)},style:{flex:1,background:"#22223a",border:"1px solid #3a3a5a",color:"#9090c0",borderRadius:4,padding:4,fontSize:"0.68rem",cursor:"pointer"}},t.edit),
+        e("button",{onClick:ev=>{ev.stopPropagation();onDelete(cd.cdId)},style:{flex:1,background:"#221a1a",border:"1px solid #5a3a3a",color:"#c08080",borderRadius:4,padding:4,fontSize:"0.68rem",cursor:"pointer"}},t.delete)
       )
     )
   );
@@ -375,36 +440,36 @@ function CDModal({cd,onSave,onClose}){
     e("div",{style:{background:"#10101c",border:"1px solid #252538",borderRadius:14,padding:28,width:"100%",maxWidth:540,maxHeight:"92vh",overflowY:"auto"}},
       e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}},
         e("div",null,
-          e("h2",{style:{fontFamily:"'Playfair Display',serif",color:"#e8e8f0",fontSize:"1.25rem"}},cd?.cdId?"Editar CD":"Agregar CD"),
+          e("h2",{style:{fontFamily:"'Playfair Display',serif",color:"#e8e8f0",fontSize:"1.25rem"}},cd?.cdId?t.editCd:t.addCdModal),
           cd?.cdId&&e("div",{style:{fontSize:"0.65rem",color:"#3a3a5a",marginTop:2}},cd.cdId)
         ),
         e("button",{onClick:onClose,style:{background:"transparent",border:"none",color:"#5a5a7a",fontSize:"1.2rem",cursor:"pointer"}},"✕")
       ),
       e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
-        e("div",{style:{gridColumn:"1/-1"}},e("label",{style:lbl},"Artista *"),e("input",{style:inp,value:form.artist,onChange:ev=>set("artist",ev.target.value)})),
-        e("div",{style:{gridColumn:"1/-1"}},e("label",{style:lbl},"Título *"),e("input",{style:inp,value:form.album,onChange:ev=>set("album",ev.target.value)})),
-        e("div",null,e("label",{style:lbl},"Año original"),e("input",{style:inp,type:"number",value:form.year,onChange:ev=>set("year",ev.target.value)})),
-        e("div",null,e("label",{style:lbl},"Año edición"),e("input",{style:inp,type:"number",value:form.issueYear,onChange:ev=>set("issueYear",ev.target.value)})),
-        e("div",null,e("label",{style:lbl},"Sello"),e("input",{style:inp,value:form.label,onChange:ev=>set("label",ev.target.value)})),
-        e("div",null,e("label",{style:lbl},"País"),e("input",{style:inp,value:form.country||"",onChange:ev=>set("country",ev.target.value),placeholder:"Ej: UK"})),
-        e("div",null,e("label",{style:lbl},"Categoría"),
-          e("select",{style:inp,value:form.genre,onChange:ev=>set("genre",ev.target.value)},e("option",{value:""},"— Seleccionar —"),...CATEGORIES.map(g=>e("option",{key:g,value:g},g)))),
-        e("div",null,e("label",{style:lbl},"Estado"),
+        e("div",{style:{gridColumn:"1/-1"}},e("label",{style:lbl},t.artistField),e("input",{style:inp,value:form.artist,onChange:ev=>set("artist",ev.target.value)})),
+        e("div",{style:{gridColumn:"1/-1"}},e("label",{style:lbl},t.titleField),e("input",{style:inp,value:form.album,onChange:ev=>set("album",ev.target.value)})),
+        e("div",null,e("label",{style:lbl},t.sortYear),e("input",{style:inp,type:"number",value:form.year,onChange:ev=>set("year",ev.target.value)})),
+        e("div",null,e("label",{style:lbl},t.sortIssue),e("input",{style:inp,type:"number",value:form.issueYear,onChange:ev=>set("issueYear",ev.target.value)})),
+        e("div",null,e("label",{style:lbl},t.labelField),e("input",{style:inp,value:form.label,onChange:ev=>set("label",ev.target.value)})),
+        e("div",null,e("label",{style:lbl},t.countryField),e("input",{style:inp,value:form.country||"",onChange:ev=>set("country",ev.target.value),placeholder:"Ej: UK"})),
+        e("div",null,e("label",{style:lbl},t.categoryField),
+          e("select",{style:inp,value:form.genre,onChange:ev=>set("genre",ev.target.value)},e("option",{value:""},t.selectOne),...CATEGORIES.map(g=>e("option",{key:g,value:g},g)))),
+        e("div",null,e("label",{style:lbl},t.conditionField),
           e("select",{style:inp,value:form.condition,onChange:ev=>set("condition",ev.target.value)},...CONDITIONS.map(c=>e("option",{key:c,value:c},c)))),
-        e("div",null,e("label",{style:lbl},"Tipo"),
+        e("div",null,e("label",{style:lbl},t.typeField),
           e("select",{style:inp,value:form.type,onChange:ev=>set("type",ev.target.value)},e("option",{value:"Commercial"},"Commercial"),e("option",{value:"Promo"},"Promo"))),
-        e("div",null,e("label",{style:lbl},"Valor estimado (€)"),e("input",{style:inp,type:"number",value:form.estimatedValue,onChange:ev=>set("estimatedValue",ev.target.value)})),
+        e("div",null,e("label",{style:lbl},t.valueField),e("input",{style:inp,type:"number",value:form.estimatedValue,onChange:ev=>set("estimatedValue",ev.target.value)})),
         e("div",{style:{gridColumn:"1/-1"}},
-          e("label",{style:lbl},"Fotos en GitHub"),
+          e("label",{style:lbl},t.photosField),
           e("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
             ...PHOTO_TYPES.map(type=>e("button",{key:type,onClick:()=>togglePhoto(type),style:{background:form.photos.includes(type)?"#1e2a1e":"#0d0d1a",border:`1px solid ${form.photos.includes(type)?"#4ade80":"#252538"}`,color:form.photos.includes(type)?"#4ade80":"#5a5a7a",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:"0.72rem",transition:"all 0.15s"}},`${form.photos.includes(type)?"✓ ":""}${PHOTO_LABELS[type]}`))
           )
         ),
-        e("div",{style:{gridColumn:"1/-1"}},e("label",{style:lbl},"Notas"),e("textarea",{style:{...inp,resize:"vertical",minHeight:60},value:form.notes||"",onChange:ev=>set("notes",ev.target.value)}))
+        e("div",{style:{gridColumn:"1/-1"}},e("label",{style:lbl},t.notesField),e("textarea",{style:{...inp,resize:"vertical",minHeight:60},value:form.notes||"",onChange:ev=>set("notes",ev.target.value)}))
       ),
       e("div",{style:{display:"flex",gap:10,marginTop:22}},
-        e("button",{onClick:onClose,style:{flex:1,background:"transparent",border:"1px solid #252538",color:"#5a5a7a",borderRadius:6,padding:10,cursor:"pointer",fontSize:"0.78rem"}},"Cancelar"),
-        e("button",{onClick:()=>{if(form.artist&&form.album)onSave(form)},style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",fontSize:"0.78rem",fontWeight:600}},cd?.cdId?"Guardar cambios":"Agregar")
+        e("button",{onClick:onClose,style:{flex:1,background:"transparent",border:"1px solid #252538",color:"#5a5a7a",borderRadius:6,padding:10,cursor:"pointer",fontSize:"0.78rem"}},t.cancel),
+        e("button",{onClick:()=>{if(form.artist&&form.album)onSave(form)},style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",fontSize:"0.78rem",fontWeight:600}},cd?.cdId?t.save:t.add)
       )
     )
   );
@@ -412,6 +477,9 @@ function CDModal({cd,onSave,onClose}){
 
 // ── MAIN APP ──────────────────────────────────────────────
 function App(){
+  const [lang,setLang]=useState("es");
+  // Update global t synchronously on every render
+  t = T[lang];
   const [cds,setCds]=useState(ALL_CDS);
   const [activeTab,setActiveTab]=useState("collection");
   const [view,setView]=useState("grid");
@@ -445,7 +513,7 @@ function App(){
       :[...prev,{...form,cdId:`CD-${String(prev.length+1).padStart(4,"0")}`,year:Number(form.year)||0,issueYear:Number(form.issueYear)||0,estimatedValue:Number(form.estimatedValue)||0}]);
     setModal(null);
   };
-  const deleteCd=cdId=>{if(confirm("¿Eliminar este CD?"))setCds(prev=>prev.filter(c=>c.cdId!==cdId))};
+  const deleteCd=cdId=>{if(confirm(lang==="es"?"¿Eliminar este CD?":"Delete this CD?"))setCds(prev=>prev.filter(c=>c.cdId!==cdId))};
   const handleEdit=cd=>{setSelectedCd(null);setModal(cd);};
 
   const totalValue=cds.reduce((s,c)=>s+(c.estimatedValue||0),0);
@@ -464,29 +532,35 @@ function App(){
               e("span",{style:{fontSize:"0.65rem",color:"#2a2a45",letterSpacing:"0.15em"}},"CD LIBRARY")
             ),
             e("div",{style:{display:"flex",gap:18,marginTop:5,flexWrap:"wrap"}},
-              ...[["discos",cds.length,"#9090c8"],["artistas",ARTISTS.length,"#9090c8"],["variantes",variants,"#ec4899"],["promos",promos,"#f59e0b"],["con fotos",`${withPhotos}/${cds.length}`,"#4ade80"],["valor total",`€${totalValue.toLocaleString()}`,"#fbbf24"]].map(([label,val,color])=>
+              ...[[t.records,cds.length,"#9090c8"],[t.artists,ARTISTS.length,"#9090c8"],[t.variants,variants,"#ec4899"],["promos",promos,"#f59e0b"],[t.withPhotos,`${withPhotos}/${cds.length}`,"#4ade80"],[t.totalValue,`€${totalValue.toLocaleString()}`,"#fbbf24"]].map(([label,val,color])=>
                 e("span",{key:label,style:{fontSize:"0.68rem",color:"#3a3a5a"}},e("span",{style:{color}},val),` ${label}`)
               )
             )
           ),
-          activeTab==="collection"&&e("button",{onClick:()=>setModal("add"),style:{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:8,padding:"9px 16px",cursor:"pointer",fontSize:"0.75rem",fontWeight:600,letterSpacing:"0.05em",boxShadow:"0 4px 20px rgba(99,102,241,0.35)",whiteSpace:"nowrap",marginTop:4}},`+ Agregar CD`)
+          e("div",{style:{display:"flex",gap:8,alignItems:"center",marginTop:4}},
+          e("select",{value:lang,onChange:ev=>setLang(ev.target.value),style:{background:"#10101c",border:"1px solid #2a2a3d",borderRadius:6,padding:"7px 10px",color:"#9090b0",fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",cursor:"pointer",outline:"none"}},
+            e("option",{value:"es"},"🌐 ES"),
+            e("option",{value:"en"},"🌐 EN")
+          ),
+          activeTab==="collection"&&e("button",{onClick:()=>setModal("add"),style:{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:8,padding:"9px 16px",cursor:"pointer",fontSize:"0.75rem",fontWeight:600,letterSpacing:"0.05em",boxShadow:"0 4px 20px rgba(99,102,241,0.35)",whiteSpace:"nowrap"}},t.addCd)
+        )
         ),
         e("div",{style:{display:"flex",gap:0,borderBottom:"1px solid #1a1a28",marginBottom:-1}},
-          ...["collection","stats"].map(tab=>e("button",{key:tab,className:`tab ${activeTab===tab?"active":""}`,onClick:()=>setActiveTab(tab)},tab==="collection"?"Colección":"Estadísticas"))
+          ...["collection","stats"].map(tab=>e("button",{key:tab,className:`tab ${activeTab===tab?"active":""}`,onClick:()=>setActiveTab(tab)},tab==="collection"?t.collection:t.statistics))
         )
       )
     ),
     activeTab==="collection"&&e("div",{style:{borderBottom:"1px solid #1a1a28",padding:"12px 24px",background:"rgba(10,10,20,0.95)"}},
       e("div",{style:{maxWidth:1500,margin:"0 auto",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}},
-        e("input",{style:{...inputBase,flex:1,minWidth:180},placeholder:"Buscar artista, título, sello, ID...",value:search,onChange:ev=>setSearch(ev.target.value)}),
-        e("select",{style:inputBase,value:filterArtist,onChange:ev=>setFilterArtist(ev.target.value)},e("option",{value:""},"Todos los artistas"),...ARTISTS.map(a=>e("option",{key:a,value:a},a))),
-        e("select",{style:inputBase,value:filterCategory,onChange:ev=>setFilterCategory(ev.target.value)},e("option",{value:""},"Todas las categorías"),...CATEGORIES.map(g=>e("option",{key:g,value:g},g))),
-        e("select",{style:inputBase,value:filterCondition,onChange:ev=>setFilterCondition(ev.target.value)},e("option",{value:""},"Todos los estados"),...CONDITIONS.map(c=>e("option",{key:c,value:c},c))),
-        e("select",{style:inputBase,value:filterType,onChange:ev=>setFilterType(ev.target.value)},e("option",{value:""},"Commercial + Promo"),e("option",{value:"Commercial"},"Solo Commercial"),e("option",{value:"Promo"},"Solo Promo")),
+        e("input",{style:{...inputBase,flex:1,minWidth:180},placeholder:t.search,value:search,onChange:ev=>setSearch(ev.target.value)}),
+        e("select",{style:inputBase,value:filterArtist,onChange:ev=>setFilterArtist(ev.target.value)},e("option",{value:""},t.allArtists),...ARTISTS.map(a=>e("option",{key:a,value:a},a))),
+        e("select",{style:inputBase,value:filterCategory,onChange:ev=>setFilterCategory(ev.target.value)},e("option",{value:""},t.allCategories),...CATEGORIES.map(g=>e("option",{key:g,value:g},g))),
+        e("select",{style:inputBase,value:filterCondition,onChange:ev=>setFilterCondition(ev.target.value)},e("option",{value:""},t.allConditions),...CONDITIONS.map(c=>e("option",{key:c,value:c},c))),
+        e("select",{style:inputBase,value:filterType,onChange:ev=>setFilterType(ev.target.value)},e("option",{value:""},t.allTypes),e("option",{value:"Commercial"},t.onlyCommercial),e("option",{value:"Promo"},t.onlyPromo)),
         e("select",{style:inputBase,value:sortBy,onChange:ev=>setSortBy(ev.target.value)},
-          e("option",{value:"artist"},"Artista A–Z"),e("option",{value:"album"},"Título A–Z"),
-          e("option",{value:"id"},"ID (valor ↓)"),e("option",{value:"year"},"Año original"),
-          e("option",{value:"issue"},"Año edición"),e("option",{value:"value"},"Valor ↓")
+          e("option",{value:"artist"},t.sortArtist),e("option",{value:"album"},t.sortTitle),
+          e("option",{value:"id"},t.sortId),e("option",{value:"year"},t.sortYear),
+          e("option",{value:"issue"},t.sortIssue),e("option",{value:"value"},t.sortValue)
         ),
         e("div",{style:{display:"flex",border:"1px solid #1e1e30",borderRadius:6,overflow:"hidden"}},
           ...["grid","list"].map(v=>e("button",{key:v,onClick:()=>setView(v),style:{background:view===v?"#1e1e35":"transparent",border:"none",color:view===v?"#8080c0":"#3a3a5a",padding:"7px 11px",cursor:"pointer",fontSize:"0.9rem"}},v==="grid"?"⊞":"☰"))
@@ -497,17 +571,17 @@ function App(){
       activeTab==="stats"
         ?e(StatsTab,{cds})
         :filtered.length===0
-          ?e("div",{style:{textAlign:"center",padding:80,color:"#2a2a40"}},e("div",{style:{fontSize:"3rem",marginBottom:12}},"◉"),"Sin resultados")
+          ?e("div",{style:{textAlign:"center",padding:80,color:"#2a2a40"}},e("div",{style:{fontSize:"3rem",marginBottom:12}},"◉"),t.noResults)
           :view==="grid"
             ?e("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(158px,1fr))",gap:14}},
                 ...filtered.map(cd=>e(CDCard,{key:cd.cdId,cd,onEdit:handleEdit,onDelete:deleteCd,onSelect:setSelectedCd})))
             :e("div",{style:{background:"#10101c",border:"1px solid #1a1a28",borderRadius:10,overflow:"hidden"}},
                 e("div",{style:{display:"grid",gridTemplateColumns:"44px 80px 1fr 120px 55px 80px 95px 75px 70px",gap:10,padding:"9px 16px",borderBottom:"1px solid #1a1a28"}},
-                  ...["","ID","Artista / Título","Sello","Año","Categoría","Estado","Valor",""].map((h,i)=>e("div",{key:i,style:{fontSize:"0.6rem",color:"#2a2a45",textTransform:"uppercase",letterSpacing:"0.12em"}},h))
+                  ...["","ID",t.artist+" / Title",t.labelField,"Año",t.categoryField,t.conditionField,"Valor",""].map((h,i)=>e("div",{key:i,style:{fontSize:"0.6rem",color:"#2a2a45",textTransform:"uppercase",letterSpacing:"0.12em"}},h))
                 ),
                 ...filtered.map(cd=>e(CDRow,{key:cd.cdId,cd,onEdit:handleEdit,onDelete:deleteCd,onSelect:setSelectedCd}))
               ),
-      activeTab==="collection"&&e("div",{style:{textAlign:"center",marginTop:20,fontSize:"0.62rem",color:"#1e1e30"}},`${filtered.length} de ${cds.length} discos`)
+      activeTab==="collection"&&e("div",{style:{textAlign:"center",marginTop:20,fontSize:"0.62rem",color:"#1e1e30"}},`${filtered.length} ${t.of} ${cds.length} ${t.records}`)
     ),
     selectedCd&&e(CDPopup,{cd:selectedCd,onClose:()=>setSelectedCd(null),onEdit:handleEdit}),
     modal&&e(CDModal,{cd:modal==="add"?null:modal,onSave:saveCd,onClose:()=>setModal(null)})
