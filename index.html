@@ -57,7 +57,7 @@ function Carousel({cd,size="small"}){
   if(valid.length===0) return e(Placeholder,{artist:cd.artist,album:cd.album,large:isLarge});
   const cur=valid[Math.min(idx,valid.length-1)];
 
-  return e("div",{style:{width:"100%",paddingBottom:isLarge?"0":"100%",height:isLarge?"100%":"auto",position:"relative",borderRadius:isLarge?"8px":"4px 4px 0 0",overflow:"hidden",background:"#080810",flex:isLarge?"1":"none"}},
+  return e("div",{style:{width:"100%",paddingBottom:isLarge?"0":"100%",height:isLarge?"100%":"auto",minHeight:isLarge?"380px":"auto",position:isLarge?"absolute":"relative",inset:isLarge?"0":"auto",borderRadius:isLarge?"8px":"4px 4px 0 0",overflow:"hidden",background:"#080810"}},
     photos.map(type=>e("img",{key:type,src:photoUrl(cd.cdId,type),style:{display:"none"},onLoad:()=>setLoaded(l=>({...l,[type]:true})),onError:()=>setErrors(er=>({...er,[type]:true}))})),
     e("img",{key:cur,src:photoUrl(cd.cdId,cur),alt:`${cd.album}-${cur}`,style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",transition:"opacity 0.25s",opacity:loaded[cur]?1:0}}),
     valid.length>1&&e("button",{onClick:ev=>{ev.stopPropagation();setIdx(i=>(i-1+valid.length)%valid.length)},style:{position:"absolute",left:isLarge?10:4,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"white",width:isLarge?36:22,height:isLarge?36:22,borderRadius:"50%",cursor:"pointer",fontSize:isLarge?"1.1rem":"0.85rem",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)",zIndex:2}},"‹"),
@@ -115,7 +115,7 @@ function CDPopup({cd, onClose, onEdit}){
     e("div",{
       className:"popup-inner",
       onClick:ev=>ev.stopPropagation(),
-      style:{background:"#10101c",border:`1px solid ${ac}33`,borderRadius:16,width:"100%",maxWidth:820,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:`0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px ${ac}22`}},
+      style:{background:"#10101c",border:`1px solid ${ac}33`,borderRadius:16,width:"100%",maxWidth:520,maxHeight:"88vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:`0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px ${ac}22`}},
 
       // Top: close button
       e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 20px",borderBottom:"1px solid #1a1a28",flexShrink:0}},
@@ -126,73 +126,63 @@ function CDPopup({cd, onClose, onEdit}){
         )
       ),
 
-      // Body
-      e("div",{style:{display:"flex",flex:1,overflow:"hidden"}},
+      // Body: photo top, info bottom
+      e("div",{style:{display:"flex",flexDirection:"column",flex:1,overflow:"hidden"}},
 
-        // Left: photo
-        e("div",{style:{width:"42%",flexShrink:0,background:"#080810",display:"flex",flexDirection:"column"}},
+        // Photo top — rectangular centered
+        e("div",{style:{width:"100%",height:300,flexShrink:0,background:"#060610",position:"relative",overflow:"hidden"}},
           cd.photos&&cd.photos.length>0
-            ? e("div",{style:{flex:1,position:"relative",minHeight:300}},
-                e(Carousel,{cd,size:"large"})
-              )
-            : e(Placeholder,{artist:cd.artist,album:cd.album,large:true})
+            ? e("div",{style:{position:"absolute",inset:0}}, e(Carousel,{cd,size:"large"}))
+            : e("div",{style:{position:"absolute",inset:0}}, e(Placeholder,{artist:cd.artist,album:cd.album,large:true}))
         ),
 
-        // Right: info
-        e("div",{style:{flex:1,overflowY:"auto",padding:"24px 28px",display:"flex",flexDirection:"column",gap:20}},
+        // Info bottom — scrollable
+        e("div",{style:{flex:1,overflowY:"auto",padding:"18px 24px",display:"flex",flexDirection:"column",gap:14,borderTop:"1px solid #1a1a28"}},
 
-          // Title block
-          e("div",null,
-            e("div",{style:{fontSize:"0.65rem",color:ac,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:600,marginBottom:6}},cd.artist),
-            e("h2",{style:{fontFamily:"'Playfair Display',serif",fontSize:"1.6rem",fontWeight:900,color:"#ffffff",lineHeight:1.2,marginBottom:10}},cd.album),
-            e("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-              cd.condition&&e(Badge,{label:cd.condition,color:condColor}),
-              cd.type==="Promo"&&e(Badge,{label:"PROMO",color:"#f59e0b"}),
-              cd.genre&&e(Badge,{label:cd.genre,color:"#6366f1"}),
-              cd.variety==="Variant"&&e(Badge,{label:"Variante",color:"#ec4899"})
-            )
-          ),
-
-          // Value highlight
-          cd.estimatedValue>0&&e("div",{style:{background:"#1a1a10",border:"1px solid #fbbf2433",borderRadius:10,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            e("div",{style:{fontSize:"0.62rem",color:"#5a5a3a",textTransform:"uppercase",letterSpacing:"0.1em"}},"Valor estimado"),
-            e("div",{style:{fontSize:"1.4rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"#fbbf24"}},`€${cd.estimatedValue.toLocaleString()}`)
-          ),
-
-          // Data grid
-          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px"}},
-            ...fields.filter(([k])=>!["Artista","Título","Estado (media)","Valor estimado","Notas"].includes(k)).map(([label,val])=>
-              e("div",{key:label},
-                e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}},label),
-                e("div",{style:{fontSize:"0.82rem",color:"#c0c0d8"}},val)
-              )
-            )
-          ),
-
-          // State row
-          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px 20px"}},
-            e("div",null,
-              e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}},"Estado media"),
-              cd.condition?e(Badge,{label:cd.condition,color:condColor}):e("span",{style:{color:"#3a3a5a"}},"—")
+          // Title + value
+          e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:16}},
+            e("div",{style:{flex:1}},
+              e("div",{style:{fontSize:"0.62rem",color:ac,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:600,marginBottom:3}},cd.artist),
+              e("h2",{style:{fontFamily:"'Playfair Display',serif",fontSize:"1.35rem",fontWeight:900,color:"#ffffff",lineHeight:1.2}},cd.album)
             ),
-            cd.artworkCondition&&e("div",null,
-              e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}},"Estado artwork"),
-              e("span",{style:{fontSize:"0.82rem",color:"#c0c0d8"}},cd.artworkCondition)
+            cd.estimatedValue>0&&e("div",{style:{textAlign:"right",flexShrink:0}},
+              e("div",{style:{fontSize:"0.52rem",color:"#4a4a2a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}},"Valor estimado"),
+              e("div",{style:{fontSize:"1.25rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"#fbbf24"}},`€${cd.estimatedValue.toLocaleString()}`)
+            )
+          ),
+
+          // Badges
+          e("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
+            cd.condition&&e(Badge,{label:cd.condition,color:condColor}),
+            cd.type==="Promo"&&e(Badge,{label:"PROMO",color:"#f59e0b"}),
+            cd.genre&&e(Badge,{label:cd.genre,color:"#6366f1"}),
+            cd.variety==="Variant"&&e(Badge,{label:"Variante",color:"#ec4899"}),
+            cd.photos&&cd.photos.length>0&&e(Badge,{label:`◉ ${cd.photos.length} foto${cd.photos.length>1?"s":""}`,color:"#4ade80"})
+          ),
+
+          // Data grid 4 cols
+          e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:"8px 12px",background:"#0d0d1a",borderRadius:8,padding:"12px 14px"}},
+            ...[
+              ["Año orig.", cd.year||"—"],
+              ["Año edic.", cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:"—"],
+              ["País", cd.country||"—"],
+              ["Sello", cd.label||"—"],
+              ["ID", cd.cdId],
+              ["Tipo", cd.type||"—"],
+              ["Variante", cd.variety||"—"],
+              ["Artwork", cd.artworkCondition||"—"],
+            ].map(([label,val])=>
+              e("div",{key:label},
+                e("div",{style:{fontSize:"0.52rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}},label),
+                e("div",{style:{fontSize:"0.75rem",color:"#c0c0d8",fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},String(val))
+              )
             )
           ),
 
           // Notes
-          cd.notes&&e("div",{style:{background:"#0d0d1a",border:"1px solid #1a1a28",borderRadius:8,padding:"12px 14px"}},
-            e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}},"Notas"),
-            e("div",{style:{fontSize:"0.78rem",color:"#9090b0",lineHeight:1.6}},cd.notes)
-          ),
-
-          // Photos list
-          cd.photos&&cd.photos.length>0&&e("div",null,
-            e("div",{style:{fontSize:"0.58rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}},"Fotos disponibles"),
-            e("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-              ...cd.photos.map(p=>e("span",{key:p,className:"badge",style:{background:"#1e2a1e",border:"1px solid #4ade8055",color:"#4ade80"}},`◉ ${PHOTO_LABELS[p]}`))
-            )
+          cd.notes&&e("div",{style:{background:"#0d0d1a",border:"1px solid #1a1a28",borderRadius:8,padding:"10px 14px"}},
+            e("div",{style:{fontSize:"0.52rem",color:"#3a3a5a",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}},"Notas"),
+            e("div",{style:{fontSize:"0.74rem",color:"#9090b0",lineHeight:1.6}},cd.notes)
           )
         )
       )
