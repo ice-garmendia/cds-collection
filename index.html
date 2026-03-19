@@ -98,6 +98,13 @@ const T = {
   }
 };
 var t = T.en;
+var isAdmin = false;
+const ADMIN_HASH = "228438f954eb282b13e2be03fa38f9873f1f75707edacdc175830a48867fb856";
+
+async function checkPassword(pwd){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pwd));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("") === ADMIN_HASH;
+}
 
 // ── HELPERS ───────────────────────────────────────────────
 const ac  = a => ART_COLOR[a]||"#7c7c9e";
@@ -203,7 +210,7 @@ function CDCard({cd,onEdit,onDelete,onSelect}){
         cd.variety==="Variant"&&h(Badge,{label:"Variant",color:"#ec4899"})
       ),
       cd.estimatedValue>0&&h("div",{style:{fontSize:"0.72rem",color:"#fbbf24",marginTop:5}},`€${fmt(cd.estimatedValue)}`),
-      hov&&h("div",{style:{display:"flex",gap:6,marginTop:8}},
+      hov&&isAdmin&&h("div",{style:{display:"flex",gap:6,marginTop:8}},
         h("button",{onClick:e=>{e.stopPropagation();onEdit(cd)},
           style:{flex:1,background:"#22223a",border:"1px solid #3a3a5a",color:"#9090c0",
             borderRadius:4,padding:4,fontSize:"0.68rem",cursor:"pointer"}},t.edit),
@@ -705,9 +712,68 @@ function CDModal({cd,onSave,onClose}){
   );
 }
 
+
+// ── ADMIN MODAL ───────────────────────────────────────────
+function AdminModal({onSuccess,onClose}){
+  const [pwd,setPwd]=useState("");
+  const [err,setErr]=useState(false);
+  const [checking,setChecking]=useState(false);
+
+  const submit=async()=>{
+    setChecking(true);
+    setErr(false);
+    const ok=await checkPassword(pwd);
+    setChecking(false);
+    if(ok){onSuccess();}
+    else{setErr(true);setPwd("");}
+  };
+
+  return h("div",{onClick:onClose,style:{position:"fixed",inset:0,zIndex:600,
+    display:"flex",alignItems:"center",justifyContent:"center",
+    background:"rgba(0,0,0,0.8)",backdropFilter:"blur(6px)"}},
+    h("div",{onClick:e=>e.stopPropagation(),style:{background:"#10101c",
+      border:"1px solid #252538",borderRadius:14,padding:32,width:"100%",maxWidth:360,
+      display:"flex",flexDirection:"column",gap:16}},
+      h("div",{style:{textAlign:"center"}},
+        h("div",{style:{fontSize:"2rem",marginBottom:8}},"🔒"),
+        h("h2",{style:{fontFamily:"'Playfair Display',serif",color:"#e8e8f0",fontSize:"1.2rem"}},
+          "Admin access")
+      ),
+      h("input",{type:"password",value:pwd,
+        onChange:e=>{setPwd(e.target.value);setErr(false);},
+        onKeyDown:e=>e.key==="Enter"&&submit(),
+        placeholder:"Password",autoFocus:true,
+        style:{background:"#0d0d1a",border:`1px solid ${err?"#f87171":"#252538"}`,
+          borderRadius:6,padding:"10px 14px",color:"#e8e8f0",
+          fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}}),
+      err&&h("div",{style:{fontSize:"0.72rem",color:"#f87171",textAlign:"center",
+        fontFamily:"'DM Mono',monospace"}},"Incorrect password"),
+      h("div",{style:{display:"flex",gap:10}},
+        h("button",{onClick:onClose,style:{flex:1,background:"transparent",
+          border:"1px solid #252538",color:"#5a5a7a",borderRadius:6,padding:10,
+          cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.78rem"}},
+          "Cancel"),
+        h("button",{onClick:submit,disabled:checking||!pwd,
+          style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
+            border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",
+            fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600,
+            opacity:checking||!pwd?0.6:1}},
+          checking?"Checking...":"Enter")
+      )
+    )
+  );
+}
+
 // ── APP ───────────────────────────────────────────────────
 function App(){
   const [lang,setLang]=useState("en");
+  const [isAdmin,setIsAdmin]=useState(false);
+  const [showAdminModal,setShowAdminModal]=useState(false);
+
+  const handleLock=()=>{
+    if(isAdmin){setIsAdmin(false);isAdmin=false;}
+    else{setShowAdminModal(true);}
+  };
   t = T[lang];
   const [cds,setCds]=useState(ALL_CDS);
   const [tab,setTab]=useState("collection");
@@ -774,7 +840,14 @@ function App(){
               h("option",{value:"en"},"🇬🇧 EN"),
               h("option",{value:"es"},"🇦🇷 ES")
             ),
-            tab==="collection"&&h("button",{onClick:()=>setModal("add"),
+            h("button",{onClick:handleLock,title:isAdmin?"Exit admin":"Admin",
+              style:{background:isAdmin?"#1e2a1e":"#10101c",
+                border:`1px solid ${isAdmin?"#4ade8066":"#2a2a3d"}`,
+                borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",
+                transition:"all 0.2s",lineHeight:1}},
+              isAdmin?"🔓":"🔒"
+            ),
+            tab==="collection"&&isAdmin&&h("button",{onClick:()=>setModal("add"),
               style:{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",
                 borderRadius:8,padding:"9px 16px",cursor:"pointer",fontFamily:"'DM Mono',monospace",
                 fontSize:"0.75rem",fontWeight:600,letterSpacing:"0.05em",
@@ -806,6 +879,7 @@ function App(){
     ),
 
     selected&&h(CDPopup,{cd:selected,onClose:()=>setSelected(null),onEdit:handleEdit}),
+    showAdminModal&&h(AdminModal,{onSuccess:()=>{setIsAdmin(true);isAdmin=true;setShowAdminModal(false);},onClose:()=>setShowAdminModal(false)}),
     modal&&h(CDModal,{cd:modal==="add"?null:modal,onSave:saveCd,onClose:()=>setModal(null)})
   );
 }
