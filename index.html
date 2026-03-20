@@ -223,7 +223,7 @@ function CDCard({cd,onEdit,onDelete,onSelect}){
         cd.genre&&h(Badge,{label:cd.genre,color:"#6366f1"}),
         cd.variety==="Variant"&&h(Badge,{label:"Variant",color:"#ec4899"})
       ),
-      cd.estimatedValue>0&&h("div",{style:{fontSize:"0.72rem",color:"var(--gold)",marginTop:5}},`€${fmt(cd.estimatedValue)}`),
+      cd.estimatedValue>0&&isAdmin&&h("div",{style:{fontSize:"0.72rem",color:"var(--gold)",marginTop:5}},`€${fmt(cd.estimatedValue)}`),
       hov&&isAdmin&&h("div",{style:{display:"flex",gap:6,marginTop:8}},
         h("button",{onClick:e=>{e.stopPropagation();onEdit(cd)},
           style:{flex:1,background:"var(--bg5)",border:"1px solid #3a3a5a",color:"var(--text3)",
@@ -262,7 +262,7 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
     h("div",{style:{fontSize:"0.7rem",color:"var(--text4)"}},cd.year||"—"),
     h("div",{style:{fontSize:"0.68rem",color:"var(--text5)"}},cd.genre),
     h(Badge,{label:cd.condition||"?",color:cc}),
-    h("div",{style:{fontSize:"0.72rem",color:"var(--gold)"}},cd.estimatedValue?`€${fmt(cd.estimatedValue)}`:"—"),
+    h("div",{style:{fontSize:"0.72rem",color:"var(--gold)"}},isAdmin&&cd.estimatedValue?`€${fmt(cd.estimatedValue)}`:"—"),
     h("div",{style:{display:"flex",gap:5}},
       h("button",{onClick:e=>{e.stopPropagation();onEdit(cd)},
         style:{background:"transparent",border:"1px solid var(--border2)",color:"var(--text4)",
@@ -558,7 +558,7 @@ function TreeView({cds,onSelect}){
                             cd.condition&&h("span",{style:{fontSize:"0.58rem",background:cc+"22",
                               border:`1px solid ${cc}44`,color:cc,padding:"1px 6px",
                               borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},cd.condition),
-                            cd.estimatedValue>0&&h("div",{style:{fontSize:"0.75rem",color:"var(--gold)",
+                            cd.estimatedValue>0&&isAdmin&&h("div",{style:{fontSize:"0.75rem",color:"var(--gold)",
                               fontFamily:"'DM Mono',monospace",fontWeight:600,minWidth:50,textAlign:"right"}},
                               `€${fmt(cd.estimatedValue)}`)
                           )
