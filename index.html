@@ -99,6 +99,25 @@ const T = {
 };
 var t = T.en;
 var isAdmin = false;
+
+const CAT_ICONS = {
+  "Album": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"0\" cy=\"0\" r=\"11\"/><circle cx=\"0\" cy=\"0\" r=\"4\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/></svg>",
+  "Singles": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"0\" cy=\"0\" r=\"11\"/><circle cx=\"0\" cy=\"0\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><line x1=\"-6\" y1=\"-7\" x2=\"6\" y2=\"-7\"/><line x1=\"-4\" y1=\"-4\" x2=\"4\" y2=\"-4\" stroke-width=\"1\" opacity=\"0.4\"/></svg>",
+  "Compilation": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><ellipse cx=\"0\" cy=\"3\" rx=\"10\" ry=\"3\"/><ellipse cx=\"0\" cy=\"0\" rx=\"10\" ry=\"3\"/><ellipse cx=\"0\" cy=\"-3\" rx=\"10\" ry=\"3\"/></svg>",
+  "Live": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"-11,0 -8,0 -6,-8 -4,8 -2,-5 0,5 2,-9 4,9 6,-4 8,4 11,0\"/></svg>",
+  "Boxset": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"-11\" y=\"-3\" width=\"18\" height=\"14\" rx=\"1\"/><polyline points=\"-11,-3 -5,-9 13,-9 7,-3\"/><polyline points=\"7,-3 13,-9 13,5 7,11\"/></svg>",
+  "EP": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M -11 0 A 11 11 0 0 1 11 0\"/><line x1=\"-11\" y1=\"0\" x2=\"11\" y2=\"0\"/><circle cx=\"0\" cy=\"-3\" r=\"2.5\"/></svg>",
+  "Mini Album": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M -11 0 A 11 11 0 0 1 11 0\"/><line x1=\"-11\" y1=\"0\" x2=\"11\" y2=\"0\"/><circle cx=\"0\" cy=\"-3\" r=\"2.5\"/></svg>",
+  "Mixed": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"-5\" cy=\"0\" r=\"8\"/><circle cx=\"5\" cy=\"0\" r=\"8\"/></svg>",
+  "Participation": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"-5\" cy=\"0\" r=\"8\"/><circle cx=\"5\" cy=\"0\" r=\"8\"/></svg>",
+  "default": "<svg width=\"16\" height=\"16\" viewBox=\"-12 -12 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"0\" cy=\"0\" r=\"11\"/></svg>",
+};
+function catIcon(cat){
+  const base=cat.replace(" · Live","");
+  const svg=CAT_ICONS[base]||CAT_ICONS.default;
+  return svg;
+}
+
 const ADMIN_HASH="228438f954eb282b13e2be03fa38f9873f1f75707edacdc175830a48867fb856";
 async function checkPassword(pwd){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pwd));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("")===ADMIN_HASH;}
 
@@ -440,8 +459,12 @@ function TreeView({cds,onSelect}){
                   border:`1px solid ${isCOpen?"#2a2a4a":"#141420"}`,transition:"all 0.15s"}},
                 h("div",{style:{width:6,height:6,borderRadius:"50%",background:c,flexShrink:0}}),
                 h("div",{style:{flex:1}},
+                  h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                  h("span",{style:{color:"#9090b0",flexShrink:0,display:"flex",alignItems:"center"},
+                    dangerouslySetInnerHTML:{__html:catIcon(cat)}}),
                   h("div",{style:{fontSize:"0.78rem",fontWeight:600,color:"#c0c0d8",
-                    fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em"}},cat),
+                    fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em"}},cat)
+                ),
                   h("div",{style:{fontSize:"0.6rem",color:"#4a4a6a",marginTop:1}},
                     `${cCds.length} ${t.records} · ${Object.keys(titles).length} ${t.titles}${isAdmin?" · €"+fmt(cVal):""}`)
                 ),
