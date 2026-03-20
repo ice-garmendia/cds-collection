@@ -274,6 +274,33 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
   );
 }
 
+
+// ── SHARE BUTTON ─────────────────────────────────────────
+function ShareButton({cdId}){
+  const [copied,setCopied]=useState(false);
+  const share=()=>{
+    const url=`${window.location.origin}${window.location.pathname}?cd=${cdId}`;
+    navigator.clipboard.writeText(url).then(()=>{
+      setCopied(true);
+      setTimeout(()=>setCopied(false),2000);
+    });
+  };
+  return h("button",{onClick:share,title:"Copy link",
+    style:{position:"absolute",top:16,right:56,zIndex:10,
+      background:copied?"rgba(74,222,128,0.2)":"rgba(0,0,0,0.4)",
+      border:`1px solid ${copied?"rgba(74,222,128,0.5)":"rgba(255,255,255,0.15)"}`,
+      color:copied?"#4ade80":"rgba(255,255,255,0.7)",
+      height:32,borderRadius:8,cursor:"pointer",fontSize:"0.68rem",
+      backdropFilter:"blur(8px)",display:"flex",alignItems:"center",
+      justifyContent:"center",gap:6,padding:"0 10px",
+      fontFamily:"'DM Mono',monospace",transition:"all 0.2s",
+      whiteSpace:"nowrap"}},
+    copied
+      ? h("span",null,"✓ Copied!")
+      : h("span",null,"⎘ Share")
+  );
+}
+
 // ── POPUP ─────────────────────────────────────────────────
 function CDPopup({cd,onClose,onEdit}){
   const c=ac(cd.artist), cc=COND_COLOR[cd.condition]||"var(--text4)";
@@ -296,6 +323,8 @@ function CDPopup({cd,onClose,onEdit}){
       !fp&&h("div",{style:{position:"absolute",inset:0,zIndex:0,
         background:`linear-gradient(135deg,${c}33,#0a0a14)`}}),
       // close
+      // Share button
+      h(ShareButton,{cdId:cd.cdId}),
       h("button",{onClick:onClose,style:{position:"absolute",top:16,right:16,zIndex:10,
         background:"rgba(0,0,0,0.4)",border:"none",color:"rgba(255,255,255,0.7)",
         width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:"1rem",
@@ -767,6 +796,15 @@ function AdminModal({onSuccess,onClose}){
 // ── APP ───────────────────────────────────────────────────
 function App(){
   const [theme,setTheme]=useState("dark");
+  // On load, check for ?cd=CD-XXXX param
+  React.useEffect(()=>{
+    const params=new URLSearchParams(window.location.search);
+    const cdId=params.get("cd");
+    if(cdId){
+      const cd=ALL_CDS.find(c=>c.cdId===cdId);
+      if(cd) setSelected(cd);
+    }
+  },[]);
   const toggleTheme=()=>{const next=theme==="dark"?"light":"dark";setTheme(next);document.body.className=next;};
   const [lang,setLang]=useState("en");
   const [isAdmin,setIsAdmin]=useState(false);
