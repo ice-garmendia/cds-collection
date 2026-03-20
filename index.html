@@ -130,6 +130,31 @@ const fmt = v => v>999?v.toLocaleString():v;
 const {useState,useMemo,useEffect,useCallback} = React;
 const h = React.createElement;
 
+
+const COUNTRY_FLAGS = {
+  "UK":"🇬🇧","UNITED KINGDOM":"🇬🇧",
+  "EUROPE":"🇪🇺",
+  "JAPAN":"🇯🇵",
+  "USA":"🇺🇸","UNITED STATES":"🇺🇸",
+  "GERMANY":"🇩🇪",
+  "FRANCE":"🇫🇷",
+  "ITALY":"🇮🇹",
+  "SPAIN":"🇪🇸",
+  "NETHERLANDS":"🇳🇱","HOLLAND":"🇳🇱",
+  "AUSTRALIA":"🇦🇺",
+  "CANADA":"🇨🇦",
+  "BRAZIL":"🇧🇷",
+  "ARGENTINA":"🇦🇷",
+  "MEXICO":"🇲🇽",
+  "RUSSIA":"🇷🇺",
+  "KOREA":"🇰🇷","SOUTH KOREA":"🇰🇷",
+  "TAIWAN":"🇹🇼",
+  "AUSTRIA":"🇦🇹",
+  "SWITZERLAND":"🇨🇭",
+  "HUNGARY":"🇭🇺",
+  "THAILAND":"🇹🇭",
+};
+function countryFlag(country){return COUNTRY_FLAGS[(country||"").toUpperCase()]||""}
 // ── BADGE ─────────────────────────────────────────────────
 function Badge({label,color}){
   return h("span",{style:{background:color+"22",border:`1px solid ${color}55`,color,
@@ -555,7 +580,7 @@ function WantlistTree({items,onSelect}){
                           h("div",{style:{flex:1,display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}},
                             h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",minWidth:72}},cd.wantId),
                             h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:cd.year||""),
-                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.country),
+                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},countryFlag(cd.country)&&h("span",{style:{fontSize:"0.85rem",lineHeight:1}},countryFlag(cd.country)),cd.country),
                             cd.label&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:130}},cd.label),
                             cd.categoryCase&&h("div",{style:{fontSize:"0.68rem",color:"var(--text5)"}},cd.categoryCase),
                             cd.type==="Promo"&&h("span",{style:{fontSize:"0.58rem",background:"#f59e0b22",border:"1px solid #f59e0b44",color:"#f59e0b",padding:"1px 6px",borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},"PROMO"),
@@ -741,7 +766,7 @@ function TreeView({cds,onSelect}){
                           h("div",{style:{flex:1,display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}},
                             h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",minWidth:72}},cd.cdId),
                             h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:cd.year||""),
-                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.country),
+                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},countryFlag(cd.country)&&h("span",{style:{fontSize:"0.85rem",lineHeight:1}},countryFlag(cd.country)),cd.country),
                             cd.label&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:130}},cd.label),
                             cd.categoryCase&&h("div",{style:{fontSize:"0.68rem",color:"var(--text5)"}},cd.categoryCase),
                             cd.type==="Promo"&&h("span",{style:{fontSize:"0.58rem",background:"#f59e0b22",
