@@ -333,7 +333,7 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
 // ── POPUP ─────────────────────────────────────────────────
 function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMode,currentLang}){
   const c=ac(cd.artist), cc=COND_COLOR[cd.condition]||"var(--text4)";
-  const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0]):null;
+  const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0],cd._photoId):null;
   return h("div",{onClick:onClose,style:{position:"fixed",inset:0,zIndex:500,
     display:"flex",alignItems:"center",justifyContent:"center",padding:24,
     background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)"}},
@@ -581,7 +581,7 @@ function TreeView({cds,onSelect}){
                     isTOpen&&h("div",{style:{marginLeft:16,marginTop:2,display:"flex",flexDirection:"column",gap:2}},
                       ...discs.map(cd=>{
                         const cc=COND_COLOR[cd.condition]||"var(--text4)";
-                        const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0]):null;
+                        const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0],cd._photoId):null;
                         return h("div",{key:cd.cdId,onClick:()=>onSelect(cd),
                           style:{display:"flex",alignItems:"center",gap:10,padding:"7px 12px",
                             borderRadius:6,cursor:"pointer",background:"var(--bg)",
