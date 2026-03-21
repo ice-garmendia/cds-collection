@@ -1146,7 +1146,7 @@ function AdminModal({onSuccess,onClose}){
         h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:4}},
           localStorage.getItem("gh_token")?"GitHub token (saved — leave blank to keep)":"GitHub token (optional — for sync)"),
         h("input",{type:"password",value:ghToken,onChange:e=>setGhToken(e.target.value),
-          onKeyDown:e=>e.key==="Enter"&&submit(),
+          onKeyDown:e=>{if(e.key==="Enter")submit();},
           placeholder:localStorage.getItem("gh_token")?"••••••••••••••••":"ghp_...",
           autoFocus:true,
           style:{background:"var(--input-bg)",border:"1px solid var(--input-border)",borderRadius:6,padding:"10px 14px",color:"var(--text)",fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}})
