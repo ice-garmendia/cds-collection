@@ -372,6 +372,13 @@ function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMod
                 color:"#a5b4fc",borderRadius:8,padding:"8px 16px",cursor:"pointer",
                 fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",backdropFilter:"blur(8px)",whiteSpace:"nowrap"}},
               currentLang==="en"?"→ Move to Collection":"→ Mover a Colección"),
+            onMoveToWantlist&&adminMode&&h("button",{
+              onClick:()=>{if(confirm(currentLang==="en"?`Move "${cd.album}" back to Wantlist?`:`¿Mover "${cd.album}" de vuelta a la Wantlist?`))onMoveToWantlist(cd);},
+              style:{background:"rgba(251,191,36,0.15)",border:"1px solid rgba(251,191,36,0.4)",
+                color:"#fbbf24",borderRadius:8,padding:"8px 16px",cursor:"pointer",
+                fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",
+                backdropFilter:"blur(8px)",whiteSpace:"nowrap"}},
+              currentLang==="en"?"← Wantlist":"← Wantlist"),
             h("button",{onClick:()=>onEdit(cd),style:{background:"rgba(255,255,255,0.08)",
               border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.7)",
               borderRadius:8,padding:"8px 16px",cursor:"pointer",
