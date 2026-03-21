@@ -1287,7 +1287,14 @@ function App(){
     // Search bar (collection only)
     (tab==="collection"||tab==="wantlist")&&h("div",{style:{borderBottom:"1px solid var(--border)",padding:"10px 24px",background:"var(--filter-bg)"}},
       h("div",{style:{maxWidth:1500,margin:"0 auto"}},
-        h("input",{style:{...inp,width:"100%"},placeholder:t.search,value:search,onChange:e=>setSearch(e.target.value)})
+        h("div",{style:{position:"relative",width:"100%"}},
+          h("input",{style:{...inp,width:"100%",paddingRight:search?"32px":"11px"},placeholder:t.search,value:search,onChange:e=>setSearch(e.target.value)}),
+          search&&h("button",{onClick:()=>setSearch(""),
+            style:{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",
+              background:"transparent",border:"none",color:"var(--text4)",cursor:"pointer",
+              fontSize:"1rem",lineHeight:1,padding:"0 2px",display:"flex",alignItems:"center"}},
+            "×")
+        )
       )
     ),
 
