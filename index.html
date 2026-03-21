@@ -366,7 +366,7 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
 }
 
 // ── POPUP ─────────────────────────────────────────────────
-function CDPopup({cd,onClose,onEdit}){
+function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMode,currentLang}){
   const c=ac(cd.artist), cc=COND_COLOR[cd.condition]||"var(--text4)";
   const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0]):null;
   return h("div",{onClick:onClose,style:{position:"fixed",inset:0,zIndex:500,
