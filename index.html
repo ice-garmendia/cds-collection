@@ -289,7 +289,7 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
 }
 
 // ── POPUP ─────────────────────────────────────────────────
-function CDPopup({cd,onClose,onEdit,onMoveToCollection,adminMode,currentLang}){
+function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMode,currentLang}){
   const c=ac(cd.artist), cc=COND_COLOR[cd.condition]||"var(--text4)";
   const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0]):null;
   return h("div",{onClick:onClose,style:{position:"fixed",inset:0,zIndex:500,
@@ -326,7 +326,15 @@ function CDPopup({cd,onClose,onEdit,onMoveToCollection,adminMode,currentLang}){
         // info
         h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",
           padding:"28px 32px 28px 8px",gap:14}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:8}},
           h("div",{style:{fontSize:"0.6rem",color:"rgba(255,255,255,0.3)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em"}},cd.cdId),
+          cd.recentlyAdded&&(Date.now()-cd.recentlyAdded)<86400000&&h("span",{
+            style:{fontSize:"0.6rem",background:"rgba(99,102,241,0.2)",
+              border:"1px solid rgba(99,102,241,0.4)",color:"#a5b4fc",
+              padding:"2px 8px",borderRadius:99,fontFamily:"'DM Mono',monospace",
+              fontWeight:600,letterSpacing:"0.05em"}
+          },"✦ Recently added")
+        ),
           h("div",null,
             h("div",{style:{fontSize:"0.7rem",color:c,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:4,textShadow:`0 0 20px ${c}`}},cd.artist),
             h("h2",{style:{fontFamily:"'Playfair Display',serif",fontSize:"clamp(1.1rem,2.2vw,1.6rem)",fontWeight:900,color:"#fff",lineHeight:1.15,textShadow:"0 2px 20px rgba(0,0,0,0.8)",marginBottom:4}},cd.album),
@@ -537,7 +545,15 @@ function TreeView({cds,onSelect}){
                               onError:e=>e.target.style.display="none"})
                           ),
                           h("div",{style:{flex:1,display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}},
+                            h("div",{style:{display:"flex",alignItems:"center",gap:6}},
                             h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",minWidth:72}},cd.cdId),
+                            cd.recentlyAdded&&(Date.now()-cd.recentlyAdded)<86400000&&h("span",{
+                              style:{fontSize:"0.55rem",background:`${ac(cd.artist)}33`,
+                                border:`1px solid ${ac(cd.artist)}66`,color:ac(cd.artist),
+                                padding:"1px 6px",borderRadius:99,fontFamily:"'DM Mono',monospace",
+                                fontWeight:700,letterSpacing:"0.05em",whiteSpace:"nowrap"}
+                            },"✦ New")
+                          ),
                             h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:cd.year||""),
                             cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},countryFlag(cd.country)&&h("span",{style:{fontSize:"0.85rem",lineHeight:1}},countryFlag(cd.country)),cd.country),
                             cd.label&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:130}},cd.label),
@@ -957,9 +973,24 @@ function App(){
   const [showAdminModal,setShowAdminModal]=useState(false);
   const handleLock=()=>{if(isAdmin){setIsAdmin(false);isAdmin=false;}else{setShowAdminModal(true);}};
   const [wantlistState,setWantlistState]=useState(ALL_WANTLIST);
+  const moveToWantlist=useCallback((item)=>{
+    setCds(prev=>prev.filter(c=>c.cdId!==item.cdId));
+    setWantlistState(prev=>{
+      const newId=`WL-${String(prev.length+1).padStart(4,"0")}`;
+      const newItem={...item,wantId:newId,recentlyAdded:null};
+      delete newItem.cdId;
+      return [...prev,newItem];
+    });
+    setSelected(null);
+  },[]);
   const moveToCollection=useCallback((item)=>{
     setWantlistState(prev=>prev.filter(c=>c.wantId!==item.wantId));
-    setCds(prev=>{const newId=`CD-${String(prev.length+1).padStart(4,"0")}`;const newCd={...item,cdId:newId,photos:item.photos||[]};delete newCd.wantId;return [...prev,newCd];});
+    setCds(prev=>{
+      const newId=`CD-${String(prev.length+1).padStart(4,"0")}`;
+      const newCd={...item,cdId:newId,photos:item.photos||[],recentlyAdded:Date.now()};
+      delete newCd.wantId;
+      return [...prev,newCd];
+    });
     setSelected(null);
   },[]);
   // On load check URL param
@@ -1053,8 +1084,8 @@ function App(){
       )
     ),
 
-    // Search bar (collection only)
-    tab==="collection"&&h("div",{style:{borderBottom:"1px solid var(--border)",padding:"10px 24px",background:"var(--filter-bg)"}},
+    // Search bar (collection + wantlist)
+    (tab==="collection"||tab==="wantlist")&&h("div",{style:{borderBottom:"1px solid var(--border)",padding:"10px 24px",background:"var(--filter-bg)"}},
       h("div",{style:{maxWidth:1500,margin:"0 auto"}},
         h("input",{style:{...inp,width:"100%"},placeholder:t.search,value:search,onChange:e=>setSearch(e.target.value)})
       )
@@ -1071,7 +1102,12 @@ function App(){
         :h(TreeView,{cds:filtered,onSelect:setSelected})
     ),
 
-    selected&&h(CDPopup,{cd:selected,onClose:()=>setSelected(null),onEdit:handleEdit,onMoveToCollection:selected.wantId?moveToCollection:null,adminMode:isAdmin,currentLang:lang}),
+    selected&&h(CDPopup,{cd:selected,onMoveToWantlist:selected.cdId&&!selected.wantId?moveToWantlist:null,onClose:()=>{
+        if(selected?.recentlyAdded){
+          setCds(prev=>prev.map(c=>c.cdId===selected.cdId?{...c,recentlyAdded:null}:c));
+        }
+        setSelected(null);
+      },onEdit:handleEdit,onMoveToCollection:selected.wantId?moveToCollection:null,adminMode:isAdmin,currentLang:lang}),
     showAdminModal&&h(AdminModal,{onSuccess:()=>{setIsAdmin(true);isAdmin=true;setShowAdminModal(false);},onClose:()=>setShowAdminModal(false)}),
     modal&&h(CDModal,{cd:modal==="add"?null:modal,onSave:saveCd,onClose:()=>setModal(null)})
   );
