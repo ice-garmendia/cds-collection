@@ -289,7 +289,7 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
 }
 
 // ── POPUP ─────────────────────────────────────────────────
-function CDPopup({cd,onClose,onEdit,onMoveToCollection}){
+function CDPopup({cd,onClose,onEdit,onMoveToCollection,adminMode,currentLang}){
   const c=ac(cd.artist), cc=COND_COLOR[cd.condition]||"var(--text4)";
   const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0]):null;
   return h("div",{onClick:onClose,style:{position:"fixed",inset:0,zIndex:500,
@@ -353,17 +353,17 @@ function CDPopup({cd,onClose,onEdit,onMoveToCollection}){
             ))
           ),
           h("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}},
-            cd.estimatedValue>0&&isAdmin&&h("div",null,
+            cd.estimatedValue>0&&adminMode&&h("div",null,
               h("div",{style:{fontSize:"0.52rem",color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}},t.estValue),
               h("div",{style:{fontSize:"1.5rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"var(--gold)",textShadow:"0 0 20px rgba(251,191,36,0.4)"}},`€${fmt(cd.estimatedValue)}`)
             ),
             h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-            onMoveToCollection&&isAdmin&&h("button",{
-              onClick:()=>{if(confirm(lang==="en"?`Move "${cd.album}" to your Collection?`:`¿Mover "${cd.album}" a tu Colección?`))onMoveToCollection(cd);},
+            onMoveToCollection&&adminMode&&h("button",{
+              onClick:()=>{if(confirm(currentLang==="en"?`Move "${cd.album}" to your Collection?`:`¿Mover "${cd.album}" a tu Colección?`))onMoveToCollection(cd);},
               style:{background:"rgba(99,102,241,0.25)",border:"1px solid rgba(99,102,241,0.5)",
                 color:"#a5b4fc",borderRadius:8,padding:"8px 16px",cursor:"pointer",
                 fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",backdropFilter:"blur(8px)",whiteSpace:"nowrap"}},
-              lang==="en"?"→ Move to Collection":"→ Mover a Colección"),
+              currentLang==="en"?"→ Move to Collection":"→ Mover a Colección"),
             h("button",{onClick:()=>onEdit(cd),style:{background:"rgba(255,255,255,0.08)",
               border:"1px solid rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.7)",
               borderRadius:8,padding:"8px 16px",cursor:"pointer",
@@ -1071,7 +1071,7 @@ function App(){
         :h(TreeView,{cds:filtered,onSelect:setSelected})
     ),
 
-    selected&&h(CDPopup,{cd:selected,onClose:()=>setSelected(null),onEdit:handleEdit,onMoveToCollection:selected.wantId?moveToCollection:null}),
+    selected&&h(CDPopup,{cd:selected,onClose:()=>setSelected(null),onEdit:handleEdit,onMoveToCollection:selected.wantId?moveToCollection:null,adminMode:isAdmin,currentLang:lang}),
     showAdminModal&&h(AdminModal,{onSuccess:()=>{setIsAdmin(true);isAdmin=true;setShowAdminModal(false);},onClose:()=>setShowAdminModal(false)}),
     modal&&h(CDModal,{cd:modal==="add"?null:modal,onSave:saveCd,onClose:()=>setModal(null)})
   );
