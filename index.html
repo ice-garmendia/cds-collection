@@ -114,6 +114,7 @@ const GH_STATE = "data/state.json";
 
 // Apply GitHub state to compute initial arrays
 function applyStateToArrays(state) {
+  console.log("Applying state:", JSON.stringify(state));
   let initCds = [...ALL_CDS];
   let initWl  = [...ALL_WANTLIST];
   if(!state) return {initCds, initWl, sha: null};
@@ -1316,9 +1317,12 @@ function App(){
 
     // Load GitHub state and apply before showing app
     ghGetState().then(state=>{
+      console.log("Loaded state on startup:", JSON.stringify(state));
       if(state){
         ghShaRef.current = state._sha;
         const {initCds, initWl} = applyStateToArrays(state);
+        console.log("initCds Highlander:", initCds.find(c=>c.album==="The Highlander Selection"));
+        console.log("initWl Highlander:", initWl.find(c=>c.album==="The Highlander Selection"));
         setCds(initCds);
         setWantlistState(initWl);
       }
