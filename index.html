@@ -127,29 +127,26 @@ async function ghGetState() {
 
 async function ghSaveState(state, sha) {
   try {
-    const payload = {
-      ref: "main",
-      inputs: {
-        state: btoa(unescape(encodeURIComponent(JSON.stringify({
-          movedToCollection: state.movedToCollection,
-          movedToWantlist: state.movedToWantlist,
-          lastUpdated: new Date().toISOString()
-        },null,2)))),
-        sha: sha
-      }
+    const token = sessionStorage.getItem("gh_token");
+    if(!token) return null;
+    const body = {
+      message: "Update collection state",
+      content: btoa(unescape(encodeURIComponent(JSON.stringify({
+        movedToCollection: state.movedToCollection,
+        movedToWantlist: state.movedToWantlist,
+        lastUpdated: new Date().toISOString()
+      },null,2)))),
+      sha: sha
     };
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/save-state.yml/dispatches`,{
-      method:"POST",
-      headers:{"Accept":"application/vnd.github.v3+json","Content-Type":"application/json"},
-      body: JSON.stringify(payload)
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_STATE}`,{
+      method:"PUT",
+      headers:{"Authorization":`token ${token}`,"Content-Type":"application/json","Accept":"application/vnd.github.v3+json"},
+      body: JSON.stringify(body)
     });
-    return r.status===204?"ok":null;
+    if(!r.ok) return null;
+    const d = await r.json();
+    return d.content.sha;
   } catch(e) { return null; }
-}
-
-async function ghGetSha() {
-  const state = await ghGetState();
-  return state?._sha || null;
 }
 async function checkPassword(pwd){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pwd));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("")===ADMIN_HASH;}
 
@@ -1128,17 +1125,25 @@ function AdminModal({onSuccess,onClose}){
   const [pwd,setPwd]=useState("");
   const [err,setErr]=useState(false);
   const [checking,setChecking]=useState(false);
+  const [ghToken,setGhToken]=useState("");
   const submit=async()=>{
     setChecking(true);setErr(false);
     const ok=await checkPassword(pwd);
     setChecking(false);
-    if(ok){onSuccess();}else{setErr(true);setPwd("");}
+    if(ok){
+      // Store token in sessionStorage (cleared when browser closes)
+      if(ghToken) sessionStorage.setItem("gh_token", ghToken);
+      onSuccess();
+    }else{setErr(true);setPwd("");}
   };
   return h("div",{style:{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.8)",backdropFilter:"blur(6px)"}},
     h("div",{onClick:e=>e.stopPropagation(),style:{background:"var(--bg2)",border:"1px solid var(--input-border)",borderRadius:14,padding:32,width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:16}},
       h("div",{style:{textAlign:"center"}},h("div",{style:{fontSize:"2rem",marginBottom:8}},"🔒"),h("h2",{style:{fontFamily:"'Playfair Display',serif",color:"var(--text)",fontSize:"1.2rem"}},"Admin access")),
       h("input",{type:"password",value:pwd,onChange:e=>{setPwd(e.target.value);setErr(false);},onKeyDown:e=>e.key==="Enter"&&submit(),placeholder:"Password",autoFocus:true,
         style:{background:"var(--input-bg)",border:`1px solid ${err?"#f87171":"var(--input-border)"}`,borderRadius:6,padding:"10px 14px",color:"var(--text)",fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}}),
+      h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:4}},"GitHub token (optional — for cross-device sync)"),
+      h("input",{type:"password",value:ghToken,onChange:e=>setGhToken(e.target.value),placeholder:"ghp_...",
+        style:{background:"var(--input-bg)",border:"1px solid var(--input-border)",borderRadius:6,padding:"10px 14px",color:"var(--text)",fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}}),
       err&&h("div",{style:{fontSize:"0.72rem",color:"#f87171",textAlign:"center",fontFamily:"'DM Mono',monospace"}},"Incorrect password"),
       h("div",{style:{display:"flex",gap:10}},
         h("button",{onClick:onClose,style:{flex:1,background:"transparent",border:"1px solid var(--input-border)",color:"var(--text4)",borderRadius:6,padding:10,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.78rem"}},"Cancel"),
@@ -1174,8 +1179,8 @@ function App(){
       if(!wl.includes(item.cdId)) wl.push(item.cdId);
       // Remove from movedToCollection if it was there
       const moved=(state.movedToCollection||[]).filter(id=>id!==item.wantId);
-      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(ok=>{
-        if(ok){setSyncStatus("idle");}
+      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(sha=>{
+        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
         else setSyncStatus("error");
       });
     });
@@ -1197,8 +1202,8 @@ function App(){
       if(!moved.includes(item.wantId)) moved.push(item.wantId);
       // Remove from movedToWantlist if it was there
       const wl=(state.movedToWantlist||[]).filter(id=>id!==item.cdId);
-      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(ok=>{
-        if(ok){setSyncStatus("idle");}
+      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(sha=>{
+        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
         else setSyncStatus("error");
       });
     });
