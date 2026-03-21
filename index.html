@@ -127,7 +127,7 @@ async function ghGetState() {
 
 async function ghSaveState(state, sha) {
   try {
-    const token = sessionStorage.getItem("gh_token");
+    const token = localStorage.getItem("gh_token");
     if(!token) return null;
     const body = {
       message: "Update collection state",
@@ -1126,28 +1126,38 @@ function AdminModal({onSuccess,onClose}){
   const [err,setErr]=useState(false);
   const [checking,setChecking]=useState(false);
   const [ghToken,setGhToken]=useState("");
-  const submit=async()=>{
+  const [pwdOk,setPwdOk]=useState(false);
+  const checkPwd=async()=>{
     setChecking(true);setErr(false);
     const ok=await checkPassword(pwd);
     setChecking(false);
-    if(ok){
-      // Store token in sessionStorage (cleared when browser closes)
-      if(ghToken) sessionStorage.setItem("gh_token", ghToken);
-      onSuccess();
-    }else{setErr(true);setPwd("");}
+    if(ok){setPwdOk(true);}else{setErr(true);setPwd("");}
+  };
+  const submit=()=>{
+    if(ghToken) localStorage.setItem("gh_token", ghToken);
+    else if(localStorage.getItem("gh_token")) {} // keep existing
+    onSuccess();
   };
   return h("div",{style:{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.8)",backdropFilter:"blur(6px)"}},
     h("div",{onClick:e=>e.stopPropagation(),style:{background:"var(--bg2)",border:"1px solid var(--input-border)",borderRadius:14,padding:32,width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:16}},
       h("div",{style:{textAlign:"center"}},h("div",{style:{fontSize:"2rem",marginBottom:8}},"🔒"),h("h2",{style:{fontFamily:"'Playfair Display',serif",color:"var(--text)",fontSize:"1.2rem"}},"Admin access")),
-      h("input",{type:"password",value:pwd,onChange:e=>{setPwd(e.target.value);setErr(false);},onKeyDown:e=>e.key==="Enter"&&submit(),placeholder:"Password",autoFocus:true,
+      h("input",{type:"password",value:pwd,onChange:e=>{setPwd(e.target.value);setErr(false);},onKeyDown:e=>e.key==="Enter"&&(!pwdOk?checkPwd():submit()),placeholder:"Password",autoFocus:true,disabled:pwdOk,
         style:{background:"var(--input-bg)",border:`1px solid ${err?"#f87171":"var(--input-border)"}`,borderRadius:6,padding:"10px 14px",color:"var(--text)",fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}}),
-      h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:4}},"GitHub token (optional — for cross-device sync)"),
-      h("input",{type:"password",value:ghToken,onChange:e=>setGhToken(e.target.value),placeholder:"ghp_...",
-        style:{background:"var(--input-bg)",border:"1px solid var(--input-border)",borderRadius:6,padding:"10px 14px",color:"var(--text)",fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}}),
+      pwdOk&&h("div",null,
+        h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:4}},
+          localStorage.getItem("gh_token")?"GitHub token (saved — leave blank to keep)":"GitHub token (optional — for sync)"),
+        h("input",{type:"password",value:ghToken,onChange:e=>setGhToken(e.target.value),
+          onKeyDown:e=>e.key==="Enter"&&submit(),
+          placeholder:localStorage.getItem("gh_token")?"••••••••••••••••":"ghp_...",
+          autoFocus:true,
+          style:{background:"var(--input-bg)",border:"1px solid var(--input-border)",borderRadius:6,padding:"10px 14px",color:"var(--text)",fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}})
+      ),
       err&&h("div",{style:{fontSize:"0.72rem",color:"#f87171",textAlign:"center",fontFamily:"'DM Mono',monospace"}},"Incorrect password"),
       h("div",{style:{display:"flex",gap:10}},
         h("button",{onClick:onClose,style:{flex:1,background:"transparent",border:"1px solid var(--input-border)",color:"var(--text4)",borderRadius:6,padding:10,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.78rem"}},"Cancel"),
-        h("button",{onClick:submit,disabled:checking||!pwd,style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600,opacity:checking||!pwd?0.6:1}},checking?"Checking...":"Enter")
+        !pwdOk
+          ?h("button",{onClick:checkPwd,disabled:checking||!pwd,style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600,opacity:checking||!pwd?0.6:1}},checking?"Checking...":"Verify")
+          :h("button",{onClick:submit,style:{flex:2,background:"linear-gradient(135deg,#4ade80,#22c55e)",border:"none",color:"white",borderRadius:6,padding:10,cursor:"pointer",fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600}},"Enter →")
       )
     )
   );
