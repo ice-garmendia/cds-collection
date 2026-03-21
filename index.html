@@ -1135,7 +1135,6 @@ function AdminModal({onSuccess,onClose}){
   };
   const submit=()=>{
     if(ghToken) localStorage.setItem("gh_token", ghToken);
-    else if(localStorage.getItem("gh_token")) {} // keep existing
     onSuccess();
   };
   return h("div",{style:{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.8)",backdropFilter:"blur(6px)"}},
