@@ -1137,6 +1137,26 @@ function App(){
   const ghShaRef=React.useRef(null);
   const handleLock=()=>{if(isAdmin2){setIsAdmin2(false);isAdmin=false;}else{setShowAdminModal(true);}};
   const [wantlistState,setWantlistState]=useState(ALL_WANTLIST);
+
+  useEffect(()=>{
+    const p=new URLSearchParams(window.location.search);
+    const urlId=p.get("cd");
+    ghGetState().then(state=>{
+      if(state){
+        ghShaRef.current=state._sha;
+        const {initCds,initWl}=applyStateToArrays(state);
+        setCds(initCds);
+        setWantlistState(initWl);
+        if(urlId){const cd=initCds.find(c=>c.cdId===urlId)||ALL_CDS.find(c=>c.cdId===urlId);if(cd)setSelected(cd);}
+      } else {
+        if(urlId){const cd=ALL_CDS.find(c=>c.cdId===urlId);if(cd)setSelected(cd);}
+      }
+      setAppReady(true);
+    }).catch(()=>{
+      if(urlId){const cd=ALL_CDS.find(c=>c.cdId===urlId);if(cd)setSelected(cd);}
+      setAppReady(true);
+    });
+  },[]);
   t = T[lang];
   const [cds,setCds]=useState(ALL_CDS);
   const [tab,setTab]=useState("collection");
