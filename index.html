@@ -108,9 +108,64 @@ var t = T.en;
 var isAdmin = false;
 const ADMIN_HASH="228438f954eb282b13e2be03fa38f9873f1f75707edacdc175830a48867fb856";
 
-// ── GITHUB SYNC (via GitHub Action — no token in code) ────
+// ── GITHUB SYNC ──────────────────────────────────────────
 const GH_REPO = "ice-garmendia/cds-collection";
 const GH_STATE = "data/state.json";
+
+// Pre-load state synchronously before React renders
+function ghLoadStateSync() {
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", `https://api.github.com/repos/${GH_REPO}/contents/${GH_STATE}`, false);
+    xhr.setRequestHeader("Accept", "application/vnd.github.v3+json");
+    xhr.send();
+    if(xhr.status !== 200) return null;
+    const d = JSON.parse(xhr.responseText);
+    const state = JSON.parse(atob(d.content.replace(/\n/g,"")));
+    state._sha = d.sha;
+    return state;
+  } catch(e) { return null; }
+}
+
+// Apply state to compute initial arrays before first render
+const _preloadedState = ghLoadStateSync();
+function computeInitialArrays() {
+  let initCds = [...ALL_CDS];
+  let initWl  = [...ALL_WANTLIST];
+  if(!_preloadedState) return {initCds, initWl, sha: null};
+  const sha = _preloadedState._sha;
+
+  (_preloadedState.movedToCollection||[]).forEach(entry=>{
+    const wantId   = entry.wantId||entry;
+    const cdId     = entry.originalId||entry.cdId||null;
+    const photoId  = entry.photoId||wantId;
+    const item     = ALL_WANTLIST.find(c=>c.wantId===wantId);
+    if(item && !initCds.find(c=>c._fromWantId===wantId)){
+      const newId = cdId||`CD-${String(initCds.length+1).padStart(4,"0")}`;
+      const newCd = {...item,cdId:newId,photos:item.photos||[],_fromWantId:wantId,_photoId:photoId,_originalId:wantId};
+      delete newCd.wantId;
+      initCds.push(newCd);
+      initWl = initWl.filter(c=>c.wantId!==wantId);
+    }
+  });
+
+  (_preloadedState.movedToWantlist||[]).forEach(entry=>{
+    const cdId    = entry.cdId||entry;
+    const wantId  = entry.originalId||entry.wantId||null;
+    const photoId = entry.photoId||cdId;
+    const item    = ALL_CDS.find(c=>c.cdId===cdId);
+    if(item && !initWl.find(c=>c._fromCdId===cdId)){
+      const newId   = wantId||`WL-${String(initWl.length+1).padStart(4,"0")}`;
+      const newItem = {...item,wantId:newId,_fromCdId:cdId,_photoId:photoId,_originalId:cdId};
+      delete newItem.cdId;
+      initWl.push(newItem);
+      initCds = initCds.filter(c=>c.cdId!==cdId);
+    }
+  });
+
+  return {initCds, initWl, sha};
+}
+const {initCds: _initCds, initWl: _initWl, sha: _initSha} = computeInitialArrays();
 
 async function ghGetState() {
   try {
@@ -1215,7 +1270,7 @@ function App(){
   const [isAdmin,setIsAdmin]=useState(false);
   const [showAdminModal,setShowAdminModal]=useState(false);
   const handleLock=()=>{if(isAdmin){setIsAdmin(false);isAdmin=false;}else{setShowAdminModal(true);}};
-  const [wantlistState,setWantlistState]=useState(ALL_WANTLIST);
+  const [wantlistState,setWantlistState]=useState(_initWl);
   const moveToWantlist=useCallback((item)=>{
     setCds(prev=>prev.filter(c=>c.cdId!==item.cdId));
     setWantlistState(prev=>{
@@ -1267,7 +1322,7 @@ function App(){
   },[]);
   // On load check URL param
   // State ref for GitHub sha
-  const ghShaRef = React.useRef(null);
+  const ghShaRef = React.useRef(_initSha);
   const [syncStatus,setSyncStatus]=useState("idle"); // idle | loading | saving | error
 
   useEffect(()=>{
@@ -1276,56 +1331,11 @@ function App(){
     const id=p.get("cd");
     if(id){const cd=ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);}
 
-    // Load GitHub state
-    setSyncStatus("loading");
-    ghGetState().then(state=>{
-      if(!state){setSyncStatus("error");return;}
-      ghShaRef.current = state._sha;
-      setSyncStatus("idle");
-
-      // Apply movedToCollection
-      if(state.movedToCollection?.length){
-        state.movedToCollection.forEach(entry=>{
-          const wantId=entry.wantId||entry;
-          const restoredCdId=entry.originalId||entry.cdId||null;
-          const photoId=entry.photoId||wantId;
-          const item = ALL_WANTLIST.find(c=>c.wantId===wantId);
-          if(item){
-            setCds(prev=>{
-              if(prev.find(c=>c._fromWantId===wantId)) return prev;
-              const newId=restoredCdId||`CD-${String(prev.length+1).padStart(4,"0")}`;
-              const newCd={...item,cdId:newId,photos:item.photos||[],_fromWantId:wantId,_photoId:photoId,_originalId:entry.wantId||wantId};
-              delete newCd.wantId;
-              return [...prev,newCd];
-            });
-            setWantlistState(prev=>prev.filter(c=>c.wantId!==wantId));
-          }
-        });
-      }
-
-      // Apply movedToWantlist
-      if(state.movedToWantlist?.length){
-        state.movedToWantlist.forEach(entry=>{
-          const cdId=entry.cdId||entry;
-          const restoredWantId=entry.originalId||entry.wantId||null;
-          const photoId=entry.photoId||cdId;
-          const item = ALL_CDS.find(c=>c.cdId===cdId);
-          if(item){
-            setWantlistState(prev=>{
-              if(prev.find(c=>c._fromCdId===cdId)) return prev;
-              const newId=restoredWantId||`WL-${String(prev.length+1).padStart(4,"0")}`;
-              const newItem={...item,wantId:newId,_fromCdId:cdId,_photoId:photoId,_originalId:entry.cdId||cdId};
-              delete newItem.cdId;
-              return [...prev,newItem];
-            });
-            setCds(prev=>prev.filter(c=>c.cdId!==cdId));
-          }
-        });
-      }
-    });
+    // State already applied synchronously via _preloadedState
+    setSyncStatus("idle");
   },[]);
   t = T[lang];
-  const [cds,setCds]=useState(ALL_CDS);
+  const [cds,setCds]=useState(_initCds);
   const [tab,setTab]=useState("collection");
   const [search,setSearch]=useState("");
   const [modal,setModal]=useState(null);
