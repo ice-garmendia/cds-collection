@@ -1,10 +1,15 @@
 {
-  "movedToCollection": [],
+  "movedToCollection": [
+    {
+      "wantId": "WL-0132",
+      "photoId": "CD-0004"
+    }
+  ],
   "movedToWantlist": [
     {
       "cdId": "CD-0004",
       "photoId": "CD-0004"
     }
   ],
-  "lastUpdated": "2026-03-21T11:51:44.201Z"
+  "lastUpdated": "2026-03-21T11:51:57.475Z"
 }
