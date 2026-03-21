@@ -105,6 +105,14 @@ const T = {
   }
 };
 
+// ── HELPERS ───────────────────────────────────────────────
+const ac  = a => ART_COLOR[a]||"var(--text4)";
+const pUrl= (id,type,photoId) => `${GITHUB_BASE}/${photoId||id}/${type}.jpg`;
+const fmt = v => v>999?v.toLocaleString():v;
+const {useState,useMemo,useEffect,useCallback} = React;
+const h = React.createElement;
+
+
 const COUNTRY_FLAGS = {
   "UK":"🇬🇧","UNITED KINGDOM":"🇬🇧","EUROPE":"🇪🇺","JAPAN":"🇯🇵",
   "USA":"🇺🇸","UNITED STATES":"🇺🇸","GERMANY":"🇩🇪","FRANCE":"🇫🇷",
@@ -128,11 +136,6 @@ const CAT_ICONS={
   "default":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="11"/></svg>',
 };
 function catIcon(cat){const base=cat.replace(" · Live","");return CAT_ICONS[base]||CAT_ICONS.default;}
-
-var t = T.en;
-var isAdmin = false;
-const ADMIN_HASH="228438f954eb282b13e2be03fa38f9873f1f75707edacdc175830a48867fb856";
-async function checkPassword(pwd){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pwd));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("")===ADMIN_HASH;}
 
 // ── GITHUB SYNC ──────────────────────────────────────────
 const GH_REPO = "ice-garmendia/cds-collection";
@@ -210,102 +213,11 @@ function applyStateToArrays(state) {
 
   return {initCds, initWl};
 }
+
+var t = T.en;
 var isAdmin = false;
-
-const COUNTRY_FLAGS = {"UK":"🇬🇧","UNITED KINGDOM":"🇬🇧","EUROPE":"🇪🇺","JAPAN":"🇯🇵","USA":"🇺🇸","UNITED STATES":"🇺🇸","GERMANY":"🇩🇪","FRANCE":"🇫🇷","ITALY":"🇮🇹","SPAIN":"🇪🇸","NETHERLANDS":"🇳🇱","HOLLAND":"🇳🇱","AUSTRALIA":"🇦🇺","CANADA":"🇨🇦","BRAZIL":"🇧🇷","ARGENTINA":"🇦🇷","MEXICO":"🇲🇽","RUSSIA":"🇷🇺","KOREA":"🇰🇷","SOUTH KOREA":"🇰🇷","TAIWAN":"🇹🇼","AUSTRIA":"🇦🇹","SWITZERLAND":"🇨🇭","HUNGARY":"🇭🇺","THAILAND":"🇹🇭"};
-function countryFlag(c){return COUNTRY_FLAGS[(c||"").toUpperCase()]||""}
-
-const CAT_ICONS={"Album":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="11"/><circle cx="0" cy="0" r="4"/><circle cx="0" cy="0" r="1.5" fill="currentColor" stroke="none"/></svg>',"Singles":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="11"/><circle cx="0" cy="0" r="2" fill="currentColor" stroke="none"/><line x1="-6" y1="-7" x2="6" y2="-7"/><line x1="-4" y1="-4" x2="4" y2="-4" stroke-width="1" opacity="0.4"/></svg>',"Compilation":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="0" cy="3" rx="10" ry="3"/><ellipse cx="0" cy="0" rx="10" ry="3"/><ellipse cx="0" cy="-3" rx="10" ry="3"/></svg>',"Live":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="-11,0 -8,0 -6,-8 -4,8 -2,-5 0,5 2,-9 4,9 6,-4 8,4 11,0"/></svg>',"Boxset":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="-11" y="-3" width="18" height="14" rx="1"/><polyline points="-11,-3 -5,-9 13,-9 7,-3"/><polyline points="7,-3 13,-9 13,5 7,11"/></svg>',"EP":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M -11 0 A 11 11 0 0 1 11 0"/><line x1="-11" y1="0" x2="11" y2="0"/><circle cx="0" cy="-3" r="2.5"/></svg>',"Mini Album":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M -11 0 A 11 11 0 0 1 11 0"/><line x1="-11" y1="0" x2="11" y2="0"/><circle cx="0" cy="-3" r="2.5"/></svg>',"Mixed":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="-5" cy="0" r="8"/><circle cx="5" cy="0" r="8"/></svg>',"Participation":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="-5" cy="0" r="8"/><circle cx="5" cy="0" r="8"/></svg>',"default":'<svg width="16" height="16" viewBox="-12 -12 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="11"/></svg>'};
-function catIcon(cat){const base=cat.replace(" · Live","");return CAT_ICONS[base]||CAT_ICONS.default;}
-
 const ADMIN_HASH="228438f954eb282b13e2be03fa38f9873f1f75707edacdc175830a48867fb856";
 async function checkPassword(pwd){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pwd));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("")===ADMIN_HASH;}
-
-// ── GITHUB SYNC ──────────────────────────────────────────
-const GH_REPO = "ice-garmendia/cds-collection";
-const GH_STATE = "data/state.json";
-
-async function ghGetState() {
-  try {
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_STATE}`,{
-      headers:{"Accept":"application/vnd.github.v3+json"}
-    });
-    if(!r.ok) return null;
-    const d = await r.json();
-    const state = JSON.parse(atob(d.content.replace(/\n/g,"")));
-    state._sha = d.sha;
-    return state;
-  } catch(e) { return null; }
-}
-
-async function ghSaveState(state, sha) {
-  try {
-    const token = localStorage.getItem("gh_token");
-    if(!token) return null;
-    const body = {
-      message: "Update collection state",
-      content: btoa(unescape(encodeURIComponent(JSON.stringify({
-        movedToCollection: state.movedToCollection,
-        movedToWantlist: state.movedToWantlist,
-        lastUpdated: new Date().toISOString()
-      },null,2)))),
-      sha: sha
-    };
-    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_STATE}`,{
-      method:"PUT",
-      headers:{"Authorization":`token ${token}`,"Content-Type":"application/json","Accept":"application/vnd.github.v3+json"},
-      body: JSON.stringify(body)
-    });
-    if(!r.ok) return null;
-    const d = await r.json();
-    return d.content.sha;
-  } catch(e) { return null; }
-}
-
-function applyStateToArrays(state) {
-  let initCds = [...ALL_CDS];
-  let initWl  = [...ALL_WANTLIST];
-  if(!state) return {initCds, initWl, sha: null};
-
-  (state.movedToCollection||[]).forEach(entry=>{
-    const wantId  = entry.wantId||entry;
-    const cdId    = entry.originalId||entry.cdId||null;
-    const photoId = entry.photoId||wantId;
-    const item    = ALL_WANTLIST.find(c=>c.wantId===wantId);
-    if(item && !initCds.find(c=>c._fromWantId===wantId)){
-      const newId = cdId||`CD-${String(initCds.length+1).padStart(4,"0")}`;
-      const newCd = {...item,cdId:newId,photos:item.photos||[],_fromWantId:wantId,_photoId:photoId,_originalId:wantId};
-      delete newCd.wantId;
-      initCds.push(newCd);
-      initWl = initWl.filter(c=>c.wantId!==wantId);
-    }
-  });
-
-  (state.movedToWantlist||[]).forEach(entry=>{
-    const cdId    = entry.cdId||entry;
-    const wantId  = entry.originalId||entry.wantId||null;
-    const photoId = entry.photoId||cdId;
-    const item    = ALL_CDS.find(c=>c.cdId===cdId);
-    if(item && !initWl.find(c=>c._fromCdId===cdId)){
-      const newId   = wantId||`WL-${String(initWl.length+1).padStart(4,"0")}`;
-      const newItem = {...item,wantId:newId,_fromCdId:cdId,_photoId:photoId,_originalId:cdId};
-      delete newItem.cdId;
-      initWl.push(newItem);
-      initCds = initCds.filter(c=>c.cdId!==cdId);
-    }
-  });
-
-  return {initCds, initWl, sha: state._sha};
-}
-
-
-// ── HELPERS ───────────────────────────────────────────────
-const ac  = a => ART_COLOR[a]||"var(--text4)";
-const pUrl= (id,type,photoId) => `${GITHUB_BASE}/${photoId||id}/${type}.jpg`;
-const fmt = v => v>999?v.toLocaleString():v;
-const {useState,useMemo,useEffect,useCallback} = React;
-const h = React.createElement;
-
 // ── BADGE ─────────────────────────────────────────────────
 function Badge({label,color}){
   return h("span",{style:{background:color+"22",border:`1px solid ${color}55`,color,
@@ -402,8 +314,8 @@ function CDCard({cd,onEdit,onDelete,onSelect}){
         cd.genre&&h(Badge,{label:cd.genre,color:"#6366f1"}),
         cd.variety==="Variant"&&h(Badge,{label:"Variant",color:"#ec4899"})
       ),
-      cd.estimatedValue>0&&h("div",{style:{fontSize:"0.72rem",color:"var(--gold)",marginTop:5}},`€${fmt(cd.estimatedValue)}`),
-      hov&&isAdminState&&h("div",{style:{display:"flex",gap:6,marginTop:8}},
+      cd.estimatedValue>0&&isAdmin&&h("div",{style:{fontSize:"0.72rem",color:"var(--gold)",marginTop:5}},`€${fmt(cd.estimatedValue)}`),
+      hov&&isAdmin&&h("div",{style:{display:"flex",gap:6,marginTop:8}},
         h("button",{onClick:e=>{e.stopPropagation();onEdit(cd)},
           style:{flex:1,background:"var(--bg5)",border:"1px solid #3a3a5a",color:"var(--text3)",
             borderRadius:4,padding:4,fontSize:"0.68rem",cursor:"pointer"}},t.edit),
@@ -441,7 +353,7 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
     h("div",{style:{fontSize:"0.7rem",color:"var(--text4)"}},cd.year||"—"),
     h("div",{style:{fontSize:"0.68rem",color:"var(--text5)"}},cd.genre),
     h(Badge,{label:cd.condition||"?",color:cc}),
-    h("div",{style:{fontSize:"0.72rem",color:"var(--gold)"}},cd.estimatedValue?`€${fmt(cd.estimatedValue)}`:"—"),
+    h("div",{style:{fontSize:"0.72rem",color:"var(--gold)"}},isAdmin&&cd.estimatedValue?`€${fmt(cd.estimatedValue)}`:"—"),
     h("div",{style:{display:"flex",gap:5}},
       h("button",{onClick:e=>{e.stopPropagation();onEdit(cd)},
         style:{background:"transparent",border:"1px solid var(--border2)",color:"var(--text4)",
@@ -454,9 +366,9 @@ function CDRow({cd,onEdit,onDelete,onSelect}){
 }
 
 // ── POPUP ─────────────────────────────────────────────────
-function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMode,currentLang}){
+function CDPopup({cd,onClose,onEdit}){
   const c=ac(cd.artist), cc=COND_COLOR[cd.condition]||"var(--text4)";
-  const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0],cd._photoId):null;
+  const fp=cd.photos?.length?pUrl(cd.cdId,cd.photos[0]):null;
   return h("div",{onClick:onClose,style:{position:"fixed",inset:0,zIndex:500,
     display:"flex",alignItems:"center",justifyContent:"center",padding:24,
     background:"rgba(0,0,0,0.75)",backdropFilter:"blur(6px)"}},
@@ -476,7 +388,6 @@ function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMod
         background:`linear-gradient(135deg,${c}33,#0a0a14)`}}),
       // close
       h(ShareButton,{cdId:cd.cdId||cd.wantId}),
-      h(ShareButton,{cdId:cd.cdId||cd.wantId}),
       h("button",{onClick:onClose,style:{position:"absolute",top:16,right:16,zIndex:10,
         background:"rgba(0,0,0,0.4)",border:"none",color:"rgba(255,255,255,0.7)",
         width:32,height:32,borderRadius:"50%",cursor:"pointer",fontSize:"1rem",
@@ -492,10 +403,7 @@ function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMod
         // info
         h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",
           padding:"28px 32px 28px 8px",gap:14}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:8}},
-          h("div",{style:{fontSize:"0.6rem",color:"rgba(255,255,255,0.3)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em"}},cd.cdId||cd.wantId),
-          cd.recentlyAdded&&(Date.now()-cd.recentlyAdded)<86400000&&h("span",{style:{fontSize:"0.6rem",background:"rgba(99,102,241,0.2)",border:"1px solid rgba(99,102,241,0.4)",color:"#a5b4fc",padding:"2px 8px",borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},"✦ Recently added")
-        ),
+          h("div",{style:{fontSize:"0.6rem",color:"rgba(255,255,255,0.3)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.12em"}},cd.cdId),
           h("div",null,
             h("div",{style:{fontSize:"0.7rem",color:c,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:4,textShadow:`0 0 20px ${c}`}},cd.artist),
             h("h2",{style:{fontFamily:"'Playfair Display',serif",fontSize:"clamp(1.1rem,2.2vw,1.6rem)",fontWeight:900,color:"#fff",lineHeight:1.15,textShadow:"0 2px 20px rgba(0,0,0,0.8)",marginBottom:4}},cd.album),
@@ -522,7 +430,7 @@ function CDPopup({cd,onClose,onEdit,onMoveToCollection,onMoveToWantlist,adminMod
             ))
           ),
           h("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}},
-            cd.estimatedValue>0&&isAdminState&&h("div",null,
+            cd.estimatedValue>0&&adminMode&&h("div",null,
               h("div",{style:{fontSize:"0.52rem",color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}},t.estValue),
               h("div",{style:{fontSize:"1.5rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"var(--gold)",textShadow:"0 0 20px rgba(251,191,36,0.4)"}},`€${fmt(cd.estimatedValue)}`)
             ),
@@ -624,7 +532,7 @@ function TreeView({cds,onSelect}){
           h("div",{style:{flex:1}},
             h("div",{style:{fontSize:"0.9rem",fontWeight:700,color:"var(--text)",fontFamily:"'Playfair Display',serif"}},artist),
             h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",fontFamily:"'DM Mono',monospace",marginTop:2}},
-              `${aCds.length} ${t.records}${isAdminState?" · €"+fmt(aVal):""}`)
+              `${aCds.length} ${t.records}${isAdmin?" · €"+fmt(aVal):""}`)
           ),
           h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
             h("div",{style:{fontSize:"0.6rem",color:c,fontFamily:"'DM Mono',monospace"}},
@@ -647,14 +555,12 @@ function TreeView({cds,onSelect}){
                   borderRadius:8,cursor:"pointer",
                   background:isCOpen?"var(--bg4)":"var(--bg3)",
                   border:`1px solid ${isCOpen?"var(--border2)":"var(--border)"}`,transition:"all 0.15s"}},
-                
+                h("div",{style:{width:6,height:6,borderRadius:"50%",background:c,flexShrink:0}}),
                 h("div",{style:{flex:1}},
-                  h("div",{style:{display:"flex",alignItems:"center",gap:8}},
-                  h("span",{style:{color:"var(--text4)",flexShrink:0,display:"flex",alignItems:"center"},dangerouslySetInnerHTML:{__html:catIcon(cat)}}),
-                  h("div",{style:{fontSize:"0.78rem",fontWeight:600,color:"var(--text2)",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em"}},cat)
-                ),
+                  h("div",{style:{fontSize:"0.78rem",fontWeight:600,color:"var(--text2)",
+                    fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em"}},cat),
                   h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",marginTop:1}},
-                    `${cCds.length} ${t.records} · ${Object.keys(titles).length} ${t.titles}${isAdminState?" · €"+fmt(cVal):""}`)
+                    `${cCds.length} ${t.records} · ${Object.keys(titles).length} ${t.titles}${isAdmin?" · €"+fmt(cVal):""}`)
                 ),
                 h("span",{style:{color:"var(--text5)",fontSize:"0.75rem",
                   transition:"transform 0.2s",transform:isCOpen?"rotate(90deg)":"rotate(0)"}},"›")
@@ -682,7 +588,7 @@ function TreeView({cds,onSelect}){
                       h("div",{style:{flex:1}},
                         h("div",{style:{fontSize:"0.8rem",fontWeight:600,color:"var(--text2)",fontFamily:"'Playfair Display',serif"}},title+(discs[0]?.year>0?" ("+discs[0].year+")":"")),
                         h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",marginTop:1}},
-                          `${discs.length} ${discs.length===1?t.records.slice(0,-1):t.records}${isAdminState?" · €"+fmt(tVal):""}`)
+                          `${discs.length} ${discs.length===1?t.records.slice(0,-1):t.records}${isAdmin?" · €"+fmt(tVal):""}`)
                       ),
                       h("span",{style:{color:"var(--text5)",fontSize:"0.7rem",
                         transition:"transform 0.2s",transform:isTOpen?"rotate(90deg)":"rotate(0)"}},"›")
@@ -707,15 +613,10 @@ function TreeView({cds,onSelect}){
                           h("div",{style:{flex:1,display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}},
                             h("div",{style:{display:"flex",alignItems:"center",gap:6}},
                             h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",minWidth:72}},cd.cdId),
-                            cd.recentlyAdded&&(Date.now()-cd.recentlyAdded)<86400000&&h("span",{
-                              style:{fontSize:"0.55rem",background:`${ac(cd.artist)}33`,
-                                border:`1px solid ${ac(cd.artist)}66`,color:ac(cd.artist),
-                                padding:"1px 6px",borderRadius:99,fontFamily:"'DM Mono',monospace",
-                                fontWeight:700,whiteSpace:"nowrap"}
-                            },"✦ New")
+                            cd.recentlyAdded&&(Date.now()-cd.recentlyAdded)<86400000&&h("span",{style:{fontSize:"0.55rem",background:`${ac(cd.artist)}33`,border:`1px solid ${ac(cd.artist)}66`,color:ac(cd.artist),padding:"1px 6px",borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:700,whiteSpace:"nowrap"}},"✦ New")
                           ),
                             h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:cd.year||""),
-                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},countryFlag(cd.country)&&h("span",{style:{fontSize:"0.85rem",lineHeight:1}},countryFlag(cd.country)),cd.country),
+                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.country),
                             cd.label&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:130}},cd.label),
                             cd.categoryCase&&h("div",{style:{fontSize:"0.68rem",color:"var(--text5)"}},cd.categoryCase),
                             cd.type==="Promo"&&h("span",{style:{fontSize:"0.58rem",background:"#f59e0b22",
@@ -726,7 +627,7 @@ function TreeView({cds,onSelect}){
                             cd.condition&&h("span",{style:{fontSize:"0.58rem",background:cc+"22",
                               border:`1px solid ${cc}44`,color:cc,padding:"1px 6px",
                               borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},cd.condition),
-                            cd.estimatedValue>0&&h("div",{style:{fontSize:"0.75rem",color:"var(--gold)",
+                            cd.estimatedValue>0&&isAdmin&&h("div",{style:{fontSize:"0.75rem",color:"var(--gold)",
                               fontFamily:"'DM Mono',monospace",fontWeight:600,minWidth:50,textAlign:"right"}},
                               `€${fmt(cd.estimatedValue)}`)
                           )
@@ -744,80 +645,6 @@ function TreeView({cds,onSelect}){
   );
 }
 
-
-// ── COLLECTION vs WANTLIST CHARTS ─────────────────────────
-function CollectionVsWantlist({cds,wantlist}){
-  const SINGLES_CATS=["CD3","CD5","CD5 Enhanced"];
-  const normCat=c=>{const b=c.genre.replace(" · Live","");return SINGLES_CATS.includes(b)?"Singles":b;};
-  const artists=["Queen","Freddie Mercury","Brian May","Roger Taylor","The Cross","Smile","Queen+"];
-  const byArtist=artists.map(a=>({artist:a,collection:cds.filter(c=>c.artist===a).length,wantlist:wantlist.filter(c=>c.artist===a).length})).filter(r=>r.collection>0||r.wantlist>0);
-  const allCats=[...new Set([...cds,...wantlist].map(normCat))].sort();
-  const byCat=allCats.map(cat=>({cat,collection:cds.filter(c=>normCat(c)===cat).length,wantlist:wantlist.filter(c=>normCat(c)===cat).length})).filter(r=>r.collection>0||r.wantlist>0);
-  const maxArtist=Math.max(...byArtist.map(r=>r.collection+r.wantlist));
-  const maxCat=Math.max(...byCat.map(r=>r.collection+r.wantlist));
-  const colColor="#6366f1";const wlColor="#f59e0b";
-  const totalCol=cds.length;const totalWl=wantlist.length;const grand=totalCol+totalWl;
-  function StackedBar({collection,wantlist,max}){
-    return h("div",{style:{flex:1,height:22,background:"var(--bg4)",borderRadius:4,overflow:"hidden",display:"flex"}},
-      collection>0&&h("div",{style:{width:`${(collection/max)*100}%`,background:colColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,transition:"width 0.6s"}},
-        h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},collection>5?collection:"")),
-      wantlist>0&&h("div",{style:{width:`${(wantlist/max)*100}%`,background:wlColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,transition:"width 0.6s"}},
-        h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},wantlist>5?wantlist:""))
-    );
-  }
-  return h("div",{style:{display:"flex",flexDirection:"column",gap:16}},
-    h(CollectionVsWantlist,{cds,wantlist:ALL_WANTLIST}),
-    h("div",{style:{height:1,background:"var(--border)",margin:"8px 0"}}),
-    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}},
-      h("div",{style:{background:"var(--bg2)",border:`1px solid ${colColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},
-        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:colColor}},totalCol),
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"In collection"),
-        h("div",{style:{fontSize:"0.72rem",color:colColor,marginTop:4}},`${((totalCol/grand)*100).toFixed(1)}% of total`)),
-      h("div",{style:{background:"var(--bg2)",border:`1px solid ${wlColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},
-        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:wlColor}},totalWl),
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"On wantlist"),
-        h("div",{style:{fontSize:"0.72rem",color:wlColor,marginTop:4}},`${((totalWl/grand)*100).toFixed(1)}% of total`)),
-      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:10,padding:"16px",textAlign:"center"}},
-        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"var(--text)"}},grand),
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"Total universe"),
-        h("div",{style:{fontSize:"0.72rem",color:"var(--text5)",marginTop:4}},"Collection + Wantlist"))
-    ),
-    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
-      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"Overall split"),
-        h(DonutChart,{data:{"Collection":totalCol,"Wantlist":totalWl},colors:[colColor,wlColor]})),
-      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By category"),
-        h("div",{style:{display:"flex",gap:12,marginBottom:12}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
-          h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))),
-        h("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-          ...byCat.map(({cat,collection,wantlist})=>
-            h("div",{key:cat,style:{display:"flex",alignItems:"center",gap:10}},
-              h("div",{style:{width:90,fontSize:"0.68rem",color:"var(--text3)",textAlign:"right",flexShrink:0}},cat),
-              h(StackedBar,{collection,wantlist,max:maxCat})))))
-    ),
-    h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
-      h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By artist — collection vs wantlist"),
-      h("div",{style:{display:"flex",gap:12,marginBottom:14}},
-        h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
-        h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))),
-      h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        ...byArtist.map(({artist,collection,wantlist})=>{
-          const c=ac(artist);const total=collection+wantlist;
-          const colPct=total>0?(collection/total*100).toFixed(0):0;
-          return h("div",{key:artist,style:{display:"flex",alignItems:"center",gap:10}},
-            h("div",{style:{width:120,fontSize:"0.72rem",color:c,textAlign:"right",flexShrink:0,fontWeight:600}},artist),
-            h("div",{style:{flex:1,height:26,background:"var(--bg4)",borderRadius:6,overflow:"hidden",display:"flex"}},
-              collection>0&&h("div",{style:{width:`${(collection/maxArtist)*100}%`,background:colColor,display:"flex",alignItems:"center",justifyContent:"center",transition:"width 0.6s"}},
-                h("span",{style:{fontSize:"0.65rem",color:"white",fontWeight:700}},collection)),
-              wantlist>0&&h("div",{style:{width:`${(wantlist/maxArtist)*100}%`,background:wlColor,display:"flex",alignItems:"center",justifyContent:"center",transition:"width 0.6s"}},
-                h("span",{style:{fontSize:"0.65rem",color:"white",fontWeight:700}},wantlist))),
-            h("div",{style:{fontSize:"0.65rem",color:"var(--text5)",minWidth:40,textAlign:"right"}},`${colPct}% ✓`));
-        }))
-    )
-  );
-}
 // ── STATS ─────────────────────────────────────────────────
 function groupBy(arr,key){return arr.reduce((a,i)=>{const k=i[key]||"—";a[k]=(a[k]||0)+1;return a;},{});}
 function groupByVal(arr,key){return arr.reduce((a,i)=>{const k=i[key]||"—";a[k]=(a[k]||0)+(i.estimatedValue||0);return a;},{});}
@@ -1043,330 +870,18 @@ function WantlistTree({items,onSelect}){
       const aCds=items.filter(c=>c.artist===artist);
       if(!aCds.length) return;
       out[artist]={};
-      const SINGLES_CATS=["CD3","CD5","CD5 Enhanced","CD3 · Live","CD5 · Live"];
-      const rawCats=[...new Set(aCds.map(c=>c.genre.replace(" · Live","")))];
-      const cats=[...new Set(rawCats.map(c=>SINGLES_CATS.includes(c)?"Singles":c))].sort();
+      const SC=["CD3","CD5","CD5 Enhanced","CD3 · Live","CD5 · Live"];
+      const cats=[...new Set(aCds.map(c=>{const b=c.genre.replace(" · Live","");return SC.includes(b)?"Singles":b;}))].sort();
       cats.forEach(cat=>{
         const cCds=cat==="Singles"
-          ?aCds.filter(c=>SINGLES_CATS.includes(c.genre.replace(" · Live",""))||SINGLES_CATS.includes(c.genre))
-          :aCds.filter(c=>c.genre.replace(" · Live","")=== cat&&!SINGLES_CATS.includes(c.genre.replace(" · Live","")));
+          ?aCds.filter(c=>SC.includes(c.genre.replace(" · Live",""))||SC.includes(c.genre))
+          :aCds.filter(c=>c.genre.replace(" · Live","")=== cat&&!SC.includes(c.genre.replace(" · Live","")));
         if(!cCds.length) return;
         out[artist][cat]={};
         const titles=[...new Set(cCds.map(c=>c.album))].sort((a,b)=>{
-          const minA=Math.min(...cCds.filter(c=>c.album===a).map(c=>c.year||9999));
-          const minB=Math.min(...cCds.filter(c=>c.album===b).map(c=>c.year||9999));
-          return minA-minB;
-        });
-        titles.forEach(title=>{
-          const COUNTRY_ORDER=["UK","EUROPE","NETHERLANDS","HOLLAND","JAPAN","USA"];
-          const cRank=c=>{const i=COUNTRY_ORDER.indexOf((c.country||"").toUpperCase());return i>=0?i:COUNTRY_ORDER.length;};
-          out[artist][cat][title]=cCds.filter(c=>c.album===title)
-            .sort((a,b)=>{const d=(a.issueYear||0)-(b.issueYear||0);return d!==0?d:cRank(a)-cRank(b);});
-        });
-      });
-    });
-    return out;
-  },[items]);
-  const totVal=items.reduce((s,c)=>s+(c.estimatedValue||0),0);
-  return h("div",{style:{display:"flex",flexDirection:"column",gap:4}},
-    h("div",{style:{display:"flex",gap:20,padding:"6px 0 14px",borderBottom:"1px solid var(--border)",marginBottom:8,flexWrap:"wrap"}},
-      h("span",{style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"var(--text5)"}},h("span",{style:{color:"var(--accent)"}},items.length)," ",t.items),
-      isAdmin&&h("span",{style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"var(--text5)"}},h("span",{style:{color:"var(--gold)"}},`€${fmt(totVal)}`)," ",t.targetValue)
-    ),
-    items.length===0&&h("div",{style:{textAlign:"center",padding:60,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},
-      h("div",{style:{fontSize:"2rem",marginBottom:12}},"★"),h("div",null,t.wantlistEmpty)
-    ),
-    ...Object.entries(tree).map(([artist,cats])=>{
-      const c=ac(artist);
-      const aCds=items.filter(x=>x.artist===artist);
-      const aVal=aCds.reduce((s,x)=>s+(x.estimatedValue||0),0);
-      const isOpen=openA[artist];
-      return h("div",{key:artist,style:{marginBottom:4}},
-        h("div",{className:"tree-row",onClick:()=>setOpenA(s=>({...s,[artist]:!s[artist]})),
-          style:{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:10,cursor:"pointer",
-            background:isOpen?`${c}18`:"var(--bg2)",border:`1px solid ${isOpen?c+"44":"var(--border)"}`,transition:"all 0.2s"}},
-          h("div",{style:{width:36,height:36,borderRadius:8,flexShrink:0,background:`linear-gradient(135deg,${c}cc,${c}44)`,
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.85rem",fontWeight:900,color:"white",fontFamily:"'Playfair Display',serif"}},
-            artist.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()),
-          h("div",{style:{flex:1}},
-            h("div",{style:{fontSize:"0.9rem",fontWeight:700,color:"var(--text)",fontFamily:"'Playfair Display',serif"}},artist),
-            h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",fontFamily:"'DM Mono',monospace",marginTop:2}},
-              `${aCds.length} ${t.items}${isAdmin?" · €"+fmt(aVal):""}`)
-          ),
-          h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-            h("div",{style:{fontSize:"0.6rem",color:c,fontFamily:"'DM Mono',monospace"}},`${Object.keys(cats).length} ${t.categories}`),
-            h("span",{style:{color:"var(--text5)",fontSize:"0.8rem",transition:"transform 0.2s",transform:isOpen?"rotate(90deg)":"rotate(0)"}},"›")
-          )
-        ),
-        isOpen&&h("div",{style:{marginLeft:16,marginTop:4,display:"flex",flexDirection:"column",gap:3}},
-          ...Object.entries(cats).map(([cat,titles])=>{
-            const ck=`w_${artist}__${cat}`;
-            const cCds=Object.values(titles).flat();
-            const cVal=cCds.reduce((s,x)=>s+(x.estimatedValue||0),0);
-            const isCOpen=openC[ck];
-            return h("div",{key:ck},
-              h("div",{className:"tree-row",onClick:()=>setOpenC(s=>({...s,[ck]:!s[ck]})),
-                style:{display:"flex",alignItems:"center",gap:10,padding:"9px 14px",borderRadius:8,cursor:"pointer",
-                  background:isCOpen?"var(--bg4)":"var(--bg3)",border:`1px solid ${isCOpen?"var(--border2)":"var(--border)"}`,transition:"all 0.15s"}},
-                h("div",{style:{display:"flex",alignItems:"center",gap:8,flex:1}},
-                  h("span",{style:{color:"var(--text4)",flexShrink:0,display:"flex",alignItems:"center"},dangerouslySetInnerHTML:{__html:catIcon(cat)}}),
-                  h("div",{style:{fontSize:"0.78rem",fontWeight:600,color:"var(--text2)",fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:"0.06em"}},cat)
-                ),
-                h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",marginRight:8}},
-                  `${cCds.length} ${t.items} · ${Object.keys(titles).length} ${t.titles}${isAdmin?" · €"+fmt(cVal):""}`),
-                h("span",{style:{color:"var(--text5)",fontSize:"0.75rem",transition:"transform 0.2s",transform:isCOpen?"rotate(90deg)":"rotate(0)"}},"›")
-              ),
-              isCOpen&&h("div",{style:{marginLeft:20,marginTop:3,display:"flex",flexDirection:"column",gap:2}},
-                ...Object.entries(titles).map(([title,discs])=>{
-                  const tk=`w_${artist}__${cat}__${title}`;
-                  const isTOpen=openT[tk];
-                  const tVal=discs.reduce((s,x)=>s+(x.estimatedValue||0),0);
-                  return h("div",{key:tk},
-                    h("div",{className:"tree-row",onClick:()=>setOpenT(s=>({...s,[tk]:!s[tk]})),
-                      style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:6,cursor:"pointer",
-                        background:isTOpen?"var(--bg4)":"transparent",border:`1px solid ${isTOpen?"var(--border)":"transparent"}`,transition:"all 0.15s"}},
-                      h("div",{style:{width:28,height:28,borderRadius:4,flexShrink:0,background:`linear-gradient(135deg,${c}44,${c}11)`}}),
-                      h("div",{style:{flex:1}},
-                        h("div",{style:{fontSize:"0.8rem",fontWeight:600,color:"var(--text2)",fontFamily:"'Playfair Display',serif"}},
-                          title+(discs[0]?.year>0?" ("+discs[0].year+")":"")),
-                        h("div",{style:{fontSize:"0.6rem",color:"var(--text5)",marginTop:1}},
-                          `${discs.length} ${discs.length===1?t.items.slice(0,-1):t.items}${isAdmin?" · €"+fmt(tVal):""}`)
-                      ),
-                      h("span",{style:{color:"var(--text5)",fontSize:"0.7rem",transition:"transform 0.2s",transform:isTOpen?"rotate(90deg)":"rotate(0)"}},"›")
-                    ),
-                    isTOpen&&h("div",{style:{marginLeft:16,marginTop:2,display:"flex",flexDirection:"column",gap:2}},
-                      ...discs.map(cd=>{
-                        const wlFp=cd.photos?.length?pUrl(cd.wantId,cd.photos[0],cd._photoId):null;
-                        return h("div",{key:cd.wantId,onClick:()=>onSelect(cd),
-                          style:{display:"flex",alignItems:"center",gap:10,padding:"7px 12px",borderRadius:6,cursor:"pointer",
-                            background:"var(--bg)",border:"1px solid var(--border)",transition:"background 0.15s"},
-                          onMouseEnter:e=>e.currentTarget.style.background="var(--bg4)",
-                          onMouseLeave:e=>e.currentTarget.style.background="var(--bg)"},
-                          h("div",{style:{width:32,height:32,borderRadius:4,flexShrink:0,overflow:"hidden",position:"relative",
-                            background:`linear-gradient(135deg,${c}55,${c}11)`,
-                            display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.85rem",color:c}},
-                            wlFp?h("img",{src:wlFp,style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"},onError:e=>e.target.style.display="none"}):
-                            "★"),
-                          h("div",{style:{flex:1,display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}},
-                            h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",minWidth:72}},cd.wantId),
-                            h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},
-                              countryFlag(cd.country)&&h("span",{style:{fontSize:"0.85rem",lineHeight:1}},countryFlag(cd.country)),
-                              cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:cd.year||""),
-                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},countryFlag(cd.country)&&h("span",{style:{fontSize:"0.85rem",lineHeight:1}},countryFlag(cd.country)),cd.country),
-                            cd.label&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:130}},cd.label),
-                            cd.categoryCase&&h("div",{style:{fontSize:"0.68rem",color:"var(--text5)"}},cd.categoryCase),
-                            cd.type==="Promo"&&h("span",{style:{fontSize:"0.58rem",background:"#f59e0b22",border:"1px solid #f59e0b44",color:"#f59e0b",padding:"1px 6px",borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:600}},"PROMO"),
-                            cd.notes&&h("div",{style:{fontSize:"0.65rem",color:"var(--text5)",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:200}},cd.notes)
-                          ),
-                          isAdmin&&cd.estimatedValue>0&&h("div",{style:{fontSize:"0.75rem",color:"var(--gold)",fontFamily:"'DM Mono',monospace",fontWeight:600,minWidth:50,textAlign:"right"}},
-                            `€${fmt(cd.estimatedValue)}`)
-                        );
-                      })
-                    )
-                  );
-                })
-              )
-            );
-          })
-        )
-      );
-    })
-  );
-}
-
-// ── ADMIN MODAL ───────────────────────────────────────────
-function AdminModal({onSuccess,onClose}){
-  const [pwd,setPwd]=useState("");
-  const [err,setErr]=useState(false);
-  const [checking,setChecking]=useState(false);
-  const [pwdOk,setPwdOk]=useState(false);
-  const [ghToken,setGhToken]=useState("");
-  const savedToken=localStorage.getItem("gh_token");
-  const checkPwd=async()=>{
-    if(!pwd) return;
-    setChecking(true);setErr(false);
-    const ok=await checkPassword(pwd);
-    setChecking(false);
-    if(ok){setPwdOk(true);}else{setErr(true);setPwd("");}
-  };
-  const finish=()=>{
-    const tokenToSave=ghToken||savedToken;
-    if(tokenToSave) localStorage.setItem("gh_token",tokenToSave);
-    onSuccess();
-  };
-  return h("div",{style:{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.8)",backdropFilter:"blur(6px)"}},
-    h("div",{onClick:e=>e.stopPropagation(),style:{background:"var(--bg2)",border:"1px solid var(--input-border)",borderRadius:14,padding:32,width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:14}},
-      h("div",{style:{textAlign:"center"}},
-        h("div",{style:{fontSize:"2rem",marginBottom:8}},pwdOk?"🔓":"🔒"),
-        h("h2",{style:{fontFamily:"'Playfair Display',serif",color:"var(--text)",fontSize:"1.2rem"}},pwdOk?"Add GitHub token":"Admin access")
-      ),
-      !pwdOk&&h("input",{type:"password",value:pwd,
-        onChange:e=>{setPwd(e.target.value);setErr(false);},
-        onKeyDown:e=>{if(e.key==="Enter")checkPwd();},
-        placeholder:"Password",autoFocus:true,
-        style:{background:"var(--input-bg)",border:`1px solid ${err?"#f87171":"var(--input-border)"}`,
-          borderRadius:6,padding:"10px 14px",color:"var(--text)",
-          fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}}),
-      err&&h("div",{style:{fontSize:"0.72rem",color:"#f87171",textAlign:"center",fontFamily:"'DM Mono',monospace"}},"Incorrect password"),
-      pwdOk&&h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        h("div",{style:{fontSize:"0.65rem",color:"var(--text4)",lineHeight:1.5}},
-          savedToken?"Token already saved. Leave blank to keep it, or paste a new one:":"Paste your GitHub token for cross-device sync (optional):"),
-        h("input",{type:"password",value:ghToken,
-          onChange:e=>setGhToken(e.target.value),
-          onKeyDown:e=>{if(e.key==="Enter")finish();},
-          placeholder:savedToken?"••••••••••••• (saved)":"ghp_...",
-          autoFocus:true,
-          style:{background:"var(--input-bg)",border:"1px solid var(--input-border)",
-            borderRadius:6,padding:"10px 14px",color:"var(--text)",
-            fontFamily:"'DM Mono',monospace",fontSize:"0.85rem",outline:"none",width:"100%"}})
-      ),
-      h("div",{style:{display:"flex",gap:10,marginTop:4}},
-        h("button",{onClick:onClose,
-          style:{flex:1,background:"transparent",border:"1px solid var(--input-border)",
-            color:"var(--text4)",borderRadius:6,padding:10,cursor:"pointer",
-            fontFamily:"'DM Mono',monospace",fontSize:"0.78rem"}},"Cancel"),
-        !pwdOk
-          ?h("button",{onClick:checkPwd,disabled:checking||!pwd,
-              style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",
-                color:"white",borderRadius:6,padding:10,cursor:"pointer",
-                fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600,
-                opacity:checking||!pwd?0.6:1}},
-              checking?"Checking...":"Verify")
-          :h("button",{onClick:finish,
-              style:{flex:2,background:"linear-gradient(135deg,#4ade80,#22c55e)",border:"none",
-                color:"white",borderRadius:6,padding:10,cursor:"pointer",
-                fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600}},
-              "Enter →")
-      )
-    )
-  );
-}
-
-// ── COLLECTION VS WANTLIST CHARTS ─────────────────────────
-function CollectionVsWantlist({cds,wantlist}){
-  const SINGLES_CATS=["CD3","CD5","CD5 Enhanced"];
-  const normCat=c=>{const b=c.genre.replace(" · Live","");return SINGLES_CATS.includes(b)?"Singles":b;};
-  const artists=["Queen","Freddie Mercury","Brian May","Roger Taylor","The Cross","Smile","Queen+"];
-  const byArtist=artists.map(a=>({artist:a,collection:cds.filter(c=>c.artist===a).length,wantlist:wantlist.filter(c=>c.artist===a).length})).filter(r=>r.collection>0||r.wantlist>0);
-  const allCats=[...new Set([...cds,...wantlist].map(normCat))].sort();
-  const byCat=allCats.map(cat=>({cat,collection:cds.filter(c=>normCat(c)===cat).length,wantlist:wantlist.filter(c=>normCat(c)===cat).length})).filter(r=>r.collection>0||r.wantlist>0);
-  const maxArtist=Math.max(...byArtist.map(r=>r.collection+r.wantlist));
-  const colColor="#6366f1"; const wlColor="#f59e0b";
-  const totalCol=cds.length; const totalWl=wantlist.length; const grand=totalCol+totalWl;
-  function StackedBar({collection,wantlist,max}){
-    return h("div",{style:{flex:1,height:22,background:"var(--bg4)",borderRadius:4,overflow:"hidden",display:"flex"}},
-      collection>0&&h("div",{style:{width:`${(collection/max)*100}%`,background:colColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,transition:"width 0.6s"}},
-        h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},collection>5?collection:"")),
-      wantlist>0&&h("div",{style:{width:`${(wantlist/max)*100}%`,background:wlColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,transition:"width 0.6s"}},
-        h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},wantlist>5?wantlist:""))
-    );
-  }
-  return h("div",{style:{display:"flex",flexDirection:"column",gap:16}},
-    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}},
-      h("div",{style:{background:"var(--bg2)",border:`1px solid ${colColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},
-        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:colColor}},totalCol),
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"In collection"),
-        h("div",{style:{fontSize:"0.72rem",color:colColor,marginTop:4}},`${((totalCol/grand)*100).toFixed(1)}% of total`)
-      ),
-      h("div",{style:{background:"var(--bg2)",border:`1px solid ${wlColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},
-        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:wlColor}},totalWl),
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"On wantlist"),
-        h("div",{style:{fontSize:"0.72rem",color:wlColor,marginTop:4}},`${((totalWl/grand)*100).toFixed(1)}% of total`)
-      ),
-      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:10,padding:"16px",textAlign:"center"}},
-        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"var(--text)"}},grand),
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"Total universe"),
-        h("div",{style:{fontSize:"0.72rem",color:"var(--text5)",marginTop:4}},"Collection + Wantlist")
-      )
-    ),
-    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
-      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"Overall split"),
-        h(DonutChart,{data:{"Collection":totalCol,"Wantlist":totalWl},colors:[colColor,wlColor]})
-      ),
-      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
-        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By category"),
-        h("div",{style:{display:"flex",gap:12,marginBottom:12}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
-          h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))
-        ),
-        h("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-          ...byCat.map(({cat,collection,wantlist})=>
-            h("div",{key:cat,style:{display:"flex",alignItems:"center",gap:10}},
-              h("div",{style:{width:90,fontSize:"0.68rem",color:"var(--text3)",textAlign:"right",flexShrink:0}},cat),
-              h(StackedBar,{collection,wantlist,max:Math.max(...byCat.map(r=>r.collection+r.wantlist))})
-            )
-          )
-        )
-      )
-    ),
-    h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
-      h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By artist — collection vs wantlist"),
-      h("div",{style:{display:"flex",gap:12,marginBottom:14}},
-        h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
-        h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))
-      ),
-      h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        ...byArtist.map(({artist,collection,wantlist})=>{
-          const c=ac(artist);
-          const total=collection+wantlist;
-          const colPct=total>0?((collection/total)*100).toFixed(0):0;
-          return h("div",{key:artist,style:{display:"flex",alignItems:"center",gap:10}},
-            h("div",{style:{width:120,fontSize:"0.72rem",color:c,textAlign:"right",flexShrink:0,fontWeight:600}},artist),
-            h(StackedBar,{collection,wantlist,max:maxArtist}),
-            h("div",{style:{fontSize:"0.65rem",color:"var(--text5)",minWidth:40,textAlign:"right"}},`${colPct}% ✓`)
-          );
-        })
-      )
-    )
-  );
-}
-
-// ── SHARE BUTTON ─────────────────────────────────────────
-function ShareButton({cdId}){
-  const [copied,setCopied]=useState(false);
-  const share=()=>{
-    const url=`${window.location.origin}${window.location.pathname}?cd=${cdId}`;
-    navigator.clipboard.writeText(url).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);});
-  };
-  return h("button",{onClick:share,title:"Copy link",
-    style:{position:"absolute",top:16,right:56,zIndex:10,
-      background:copied?"rgba(74,222,128,0.2)":"rgba(0,0,0,0.4)",
-      border:`1px solid ${copied?"rgba(74,222,128,0.5)":"rgba(255,255,255,0.15)"}`,
-      color:copied?"#4ade80":"rgba(255,255,255,0.7)",
-      height:32,borderRadius:8,cursor:"pointer",fontSize:"0.68rem",
-      backdropFilter:"blur(8px)",display:"flex",alignItems:"center",
-      justifyContent:"center",gap:6,padding:"0 10px",
-      fontFamily:"'DM Mono',monospace",transition:"all 0.2s",whiteSpace:"nowrap"}},
-    copied?h("span",null,"✓ Copied!"):h("span",null,"⎘ Share")
-  );
-}
-
-// ── WANTLIST TREE ─────────────────────────────────────────
-function WantlistTree({items,onSelect}){
-  const [openA,setOpenA]=useState({});
-  const [openC,setOpenC]=useState({});
-  const [openT,setOpenT]=useState({});
-  const wArtists=["Queen","Freddie Mercury","Brian May","Roger Taylor","The Cross","Smile","Queen+"];
-  const SINGLES_CATS=["CD3","CD5","CD5 Enhanced","CD3 · Live","CD5 · Live"];
-  const tree=useMemo(()=>{
-    const out={};
-    wArtists.forEach(artist=>{
-      const aCds=items.filter(c=>c.artist===artist);
-      if(!aCds.length) return;
-      out[artist]={};
-      const rawCats=[...new Set(aCds.map(c=>c.genre.replace(" · Live","")))];
-      const cats=[...new Set(rawCats.map(c=>SINGLES_CATS.includes(c)?"Singles":c))].sort();
-      cats.forEach(cat=>{
-        const cCds=cat==="Singles"
-          ?aCds.filter(c=>SINGLES_CATS.includes(c.genre.replace(" · Live",""))||SINGLES_CATS.includes(c.genre))
-          :aCds.filter(c=>c.genre.replace(" · Live","")=== cat&&!SINGLES_CATS.includes(c.genre.replace(" · Live","")));
-        if(!cCds.length) return;
-        out[artist][cat]={};
-        const titles=[...new Set(cCds.map(c=>c.album))].sort((a,b)=>{
-          const minA=Math.min(...cCds.filter(c=>c.album===a).map(c=>c.year||9999));
-          const minB=Math.min(...cCds.filter(c=>c.album===b).map(c=>c.year||9999));
-          return minA-minB;
+          const mA=Math.min(...cCds.filter(c=>c.album===a).map(c=>c.year||9999));
+          const mB=Math.min(...cCds.filter(c=>c.album===b).map(c=>c.year||9999));
+          return mA-mB;
         });
         titles.forEach(title=>{
           const CR=["UK","EUROPE","NETHERLANDS","HOLLAND","JAPAN","USA"];
@@ -1459,7 +974,7 @@ function WantlistTree({items,onSelect}){
                             wlFp?h("img",{src:wlFp,style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"},onError:e=>e.target.style.display="none"}):"★"),
                           h("div",{style:{flex:1,display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}},
                             h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",minWidth:72}},cd.wantId),
-                            h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},
+                            cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)",display:"flex",alignItems:"center",gap:4}},
                               countryFlag(cd.country)&&h("span",{style:{fontSize:"0.85rem",lineHeight:1}},countryFlag(cd.country)),
                               cd.issueYear&&cd.issueYear!==cd.year?cd.issueYear:cd.year||""),
                             cd.country&&h("div",{style:{fontSize:"0.72rem",color:"var(--text4)"}},cd.country),
@@ -1497,8 +1012,7 @@ function AdminModal({onSuccess,onClose}){
     setChecking(true);setErr(false);
     const ok=await checkPassword(pwd);
     setChecking(false);
-    if(ok){setPwdOk(true);}
-    else{setErr(true);setPwd("");}
+    if(ok){setPwdOk(true);}else{setErr(true);setPwd("");}
   };
   const finish=()=>{
     const tokenToSave=ghToken||savedToken;
@@ -1541,12 +1055,73 @@ function AdminModal({onSuccess,onClose}){
               style:{flex:2,background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",
                 color:"white",borderRadius:6,padding:10,cursor:"pointer",
                 fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600,
-                opacity:checking||!pwd?0.6:1}},checking?"Checking...":"Verify")
+                opacity:checking||!pwd?0.6:1}},
+              checking?"Checking...":"Verify")
           :h("button",{onClick:finish,
               style:{flex:2,background:"linear-gradient(135deg,#4ade80,#22c55e)",border:"none",
                 color:"white",borderRadius:6,padding:10,cursor:"pointer",
-                fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600}},"Enter →")
+                fontFamily:"'DM Mono',monospace",fontSize:"0.78rem",fontWeight:600}},
+              "Enter →")
       )
+    )
+  );
+}
+
+// ── COLLECTION vs WANTLIST CHARTS ─────────────────────────
+function CollectionVsWantlist({cds,wantlist}){
+  const SC=["CD3","CD5","CD5 Enhanced"];
+  const normCat=c=>{const b=c.genre.replace(" · Live","");return SC.includes(b)?"Singles":b;};
+  const artists=["Queen","Freddie Mercury","Brian May","Roger Taylor","The Cross","Smile","Queen+"];
+  const byArtist=artists.map(a=>({artist:a,collection:cds.filter(c=>c.artist===a).length,wantlist:wantlist.filter(c=>c.artist===a).length})).filter(r=>r.collection>0||r.wantlist>0);
+  const allCats=[...new Set([...cds,...wantlist].map(normCat))].sort();
+  const byCat=allCats.map(cat=>({cat,collection:cds.filter(c=>normCat(c)===cat).length,wantlist:wantlist.filter(c=>normCat(c)===cat).length})).filter(r=>r.collection>0||r.wantlist>0);
+  const maxArtist=Math.max(...byArtist.map(r=>r.collection+r.wantlist));
+  const maxCat=Math.max(...byCat.map(r=>r.collection+r.wantlist));
+  const colColor="#6366f1";const wlColor="#f59e0b";
+  const totalCol=cds.length;const totalWl=wantlist.length;const grand=totalCol+totalWl;
+  function SBar({collection,wantlist,max}){
+    return h("div",{style:{flex:1,height:22,background:"var(--bg4)",borderRadius:4,overflow:"hidden",display:"flex"}},
+      collection>0&&h("div",{style:{width:`${(collection/max)*100}%`,background:colColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,transition:"width 0.6s"}},h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},collection>5?collection:"")),
+      wantlist>0&&h("div",{style:{width:`${(wantlist/max)*100}%`,background:wlColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,transition:"width 0.6s"}},h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},wantlist>5?wantlist:""))
+    );
+  }
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:16}},
+    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}},
+      h("div",{style:{background:"var(--bg2)",border:`1px solid ${colColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:colColor}},totalCol),h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"In collection"),h("div",{style:{fontSize:"0.72rem",color:colColor,marginTop:4}},`${((totalCol/grand)*100).toFixed(1)}% of total`)),
+      h("div",{style:{background:"var(--bg2)",border:`1px solid ${wlColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:wlColor}},totalWl),h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"On wantlist"),h("div",{style:{fontSize:"0.72rem",color:wlColor,marginTop:4}},`${((totalWl/grand)*100).toFixed(1)}% of total`)),
+      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:10,padding:"16px",textAlign:"center"}},h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"var(--text)"}},grand),h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"Total universe"),h("div",{style:{fontSize:"0.72rem",color:"var(--text5)",marginTop:4}},"Collection + Wantlist"))
+    ),
+    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
+      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
+        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"Overall split"),
+        h(DonutChart,{data:{"Collection":totalCol,"Wantlist":totalWl},colors:[colColor,wlColor]})),
+      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
+        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By category"),
+        h("div",{style:{display:"flex",gap:12,marginBottom:12}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
+          h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))),
+        h("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          ...byCat.map(({cat,collection,wantlist})=>h("div",{key:cat,style:{display:"flex",alignItems:"center",gap:10}},
+            h("div",{style:{width:90,fontSize:"0.68rem",color:"var(--text3)",textAlign:"right",flexShrink:0}},cat),
+            h(SBar,{collection,wantlist,max:maxCat}))))
+      )
+    ),
+    h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
+      h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By artist — collection vs wantlist"),
+      h("div",{style:{display:"flex",gap:12,marginBottom:14}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
+        h("div",{style:{display:"flex",alignItems:"center",gap:6}},h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        ...byArtist.map(({artist,collection,wantlist})=>{
+          const c=ac(artist);const total=collection+wantlist;
+          const colPct=total>0?(collection/total*100).toFixed(0):0;
+          return h("div",{key:artist,style:{display:"flex",alignItems:"center",gap:10}},
+            h("div",{style:{width:120,fontSize:"0.72rem",color:c,textAlign:"right",flexShrink:0,fontWeight:600}},artist),
+            h("div",{style:{flex:1,height:26,background:"var(--bg4)",borderRadius:6,overflow:"hidden",display:"flex"}},
+              collection>0&&h("div",{style:{width:`${(collection/maxArtist)*100}%`,background:colColor,display:"flex",alignItems:"center",justifyContent:"center",transition:"width 0.6s"}},h("span",{style:{fontSize:"0.65rem",color:"white",fontWeight:700}},collection)),
+              wantlist>0&&h("div",{style:{width:`${(wantlist/maxArtist)*100}%`,background:wlColor,display:"flex",alignItems:"center",justifyContent:"center",transition:"width 0.6s"}},h("span",{style:{fontSize:"0.65rem",color:"white",fontWeight:700}},wantlist))),
+            h("div",{style:{fontSize:"0.65rem",color:"var(--text5)",minWidth:40,textAlign:"right"}},`${colPct}% ✓`));
+        }))
     )
   );
 }
@@ -1554,89 +1129,13 @@ function AdminModal({onSuccess,onClose}){
 function App(){
   const [theme,setTheme]=useState("dark");
   const toggleTheme=()=>{const next=theme==="dark"?"light":"dark";setTheme(next);document.body.className=next;};
-  const [theme,setTheme]=useState("dark");
-  const toggleTheme=()=>{const next=theme==="dark"?"light":"dark";setTheme(next);document.body.className=next;};
-  const toggleTheme=()=>{const next=theme==="dark"?"light":"dark";setTheme(next);document.body.className=next;};
   const [lang,setLang]=useState("en");
-  const [isAdminState,setIsAdmin]=useState(false);
+  const [isAdmin2,setIsAdmin2]=useState(false);
   const [showAdminModal,setShowAdminModal]=useState(false);
   const [syncStatus,setSyncStatus]=useState("idle");
   const [appReady,setAppReady]=useState(false);
-  const ghShaRef = React.useRef(null);
-  const handleLock=()=>{if(isAdminState){setIsAdmin(false);isAdmin=false;}else{setShowAdminModal(true);}};
-  const [wantlistState,setWantlistState]=useState(ALL_WANTLIST);
-  const moveToWantlist=useCallback((item)=>{
-    setCds(prev=>prev.filter(c=>c.cdId!==item.cdId));
-    setWantlistState(prev=>{
-      const newId=item._originalId||`WL-${String(prev.length+1).padStart(4,"0")}`;
-      const newItem={...item,wantId:newId,recentlyAdded:null,_fromCdId:item.cdId,_photoId:item._photoId||item.cdId,_originalId:item._originalId||item.cdId};
-      delete newItem.cdId;
-      return [...prev,newItem];
-    });
-    setSelected(null);
-    setSyncStatus("saving");
-    ghGetState().then(state=>{
-      if(!state) return setSyncStatus("error");
-      const wl=[...(state.movedToWantlist||[])];
-      const wlEntry={cdId:item.cdId,wantId:item.wantId,photoId:item._photoId||item.cdId,originalId:item._originalId||item.cdId};
-      if(!wl.find(m=>m.cdId===item.cdId)) wl.push(wlEntry);
-      const moved=(state.movedToCollection||[]).filter(m=>(m.wantId||m)!==item.wantId);
-      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(sha=>{
-        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
-        else setSyncStatus("error");
-      });
-    });
-  },[]);
-  const moveToCollection=useCallback((item)=>{
-    setWantlistState(prev=>prev.filter(c=>c.wantId!==item.wantId));
-    setCds(prev=>{
-      const newId=item._originalId||`CD-${String(prev.length+1).padStart(4,"0")}`;
-      const newCd={...item,cdId:newId,photos:item.photos||[],recentlyAdded:Date.now(),_fromWantId:item.wantId,_photoId:item._photoId||item.wantId,_originalId:item._originalId||item.wantId};
-      delete newCd.wantId;
-      return [...prev,newCd];
-    });
-    setSelected(null);
-    setSyncStatus("saving");
-    ghGetState().then(state=>{
-      if(!state) return setSyncStatus("error");
-      const moved=[...(state.movedToCollection||[])];
-      const newEntry={wantId:item.wantId,cdId:item.cdId||item._originalId,photoId:item._photoId||item.wantId,originalId:item._originalId||item.wantId};
-      if(!moved.find(m=>m.wantId===item.wantId)) moved.push(newEntry);
-      const wl=(state.movedToWantlist||[]).filter(m=>(m.wantId||m)!==item.wantId);
-      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(sha=>{
-        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
-        else setSyncStatus("error");
-      });
-    });
-  },[]);
-  useEffect(()=>{
-    const p=new URLSearchParams(window.location.search);
-    const id=p.get("cd");
-    if(id){const cd=ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);}
-    ghGetState().then(state=>{
-      if(state){
-        ghShaRef.current=state._sha;
-        const {initCds,initWl}=applyStateToArrays(state);
-        setCds(initCds);
-        setWantlistState(initWl);
-      }
-      setAppReady(true);
-      setSyncStatus("idle");
-    }).catch(()=>{setAppReady(true);setSyncStatus("idle");});
-  },[]);
-  const [isAdminState,setIsAdminState]=useState(false);
-  const [showAdminModal,setShowAdminModal]=useState(false);
-  const [syncStatus,setSyncStatus]=useState("idle");
-  const [appReady,setAppReady]=useState(false);
-  const ghShaRef = React.useRef(null);
-  const handleLock=()=>{if(isAdminState){setIsAdminState(false);isAdmin=false;}else{setShowAdminModal(true);}};
-  const [wantlistState,setWantlistState]=useState(ALL_WANTLIST);
-  const [isAdminState,setIsAdminState]=useState(false);
-  const [showAdminModal,setShowAdminModal]=useState(false);
-  const [syncStatus,setSyncStatus]=useState("idle");
-  const [appReady,setAppReady]=useState(false);
-  const ghShaRef = React.useRef(null);
-  const handleLock=()=>{if(isAdminState){setIsAdminState(false);isAdmin=false;}else{setShowAdminModal(true);}};
+  const ghShaRef=React.useRef(null);
+  const handleLock=()=>{if(isAdmin2){setIsAdmin2(false);isAdmin=false;}else{setShowAdminModal(true);}};
   const [wantlistState,setWantlistState]=useState(ALL_WANTLIST);
   t = T[lang];
   const [cds,setCds]=useState(ALL_CDS);
@@ -1644,26 +1143,6 @@ function App(){
   const [search,setSearch]=useState("");
   const [modal,setModal]=useState(null);
   const [selected,setSelected]=useState(null);
-
-  React.useEffect(()=>{
-    const p=new URLSearchParams(window.location.search);
-    const id=p.get("cd");
-    ghGetState().then(state=>{
-      if(state){
-        ghShaRef.current=state._sha;
-        const {initCds,initWl}=applyStateToArrays(state);
-        setCds(initCds);
-        setWantlistState(initWl);
-        if(id){const cd=initCds.find(c=>c.cdId===id)||ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);}
-      } else {
-        if(id){const cd=ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);}
-      }
-      setAppReady(true);
-    }).catch(()=>{
-      if(id){const cd=ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);}
-      setAppReady(true);
-    });
-  },[]);
 
   const filtered=useMemo(()=>{
     if(!search) return cds;
@@ -1683,27 +1162,7 @@ function App(){
     setModal(null);
   };
   const delCd=cdId=>{if(confirm(lang==="en"?"Delete this CD?":"¿Eliminar este CD?"))setCds(prev=>prev.filter(c=>c.cdId!==cdId));};
-  const moveToWantlist=useCallback((item)=>{
-    const wantId=item._originalId||`WL-${String(ALL_WANTLIST.length+1).padStart(4,"0")}`;
-    const newItem={...item,wantId,_fromCdId:item.cdId,_photoId:item._photoId||item.cdId,_originalId:item._originalId||item.cdId};
-    delete newItem.cdId;
-    setCds(prev=>prev.filter(c=>c.cdId!==item.cdId));
-    setWantlistState(prev=>[...prev,newItem]);
-    setSelected(null);
-    setSyncStatus("saving");
-    ghGetState().then(state=>{
-      if(!state) return setSyncStatus("error");
-      const wl=[...(state.movedToWantlist||[])];
-      const entry={cdId:item.cdId,wantId,photoId:item._photoId||item.cdId,originalId:item._originalId||item.cdId};
-      if(!wl.find(m=>m.cdId===item.cdId)) wl.push(entry);
-      const moved=(state.movedToWantlist||[]).filter(m=>(m.wantId||m)!==item.wantId);
-      const col=(state.movedToCollection||[]).filter(m=>(m.wantId||m)!==item.wantId);
-      ghSaveState({movedToCollection:col,movedToWantlist:wl},state._sha).then(sha=>{
-        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
-        else setSyncStatus("error");
-      });
-    });
-  },[]);
+
   const moveToCollection=useCallback((item)=>{
     const cdId=item._originalId||`CD-${String(ALL_CDS.length+1).padStart(4,"0")}`;
     const newCd={...item,cdId,_fromWantId:item.wantId,_photoId:item._photoId||item.wantId,_originalId:item._originalId||item.wantId,recentlyAdded:Date.now()};
@@ -1717,16 +1176,16 @@ function App(){
       const col=[...(state.movedToCollection||[])];
       const entry={wantId:item.wantId,cdId,photoId:item._photoId||item.wantId,originalId:item._originalId||item.wantId};
       if(!col.find(m=>m.wantId===item.wantId)) col.push(entry);
-      const wl=(state.movedToWantlist||[]).filter(m=>(m.cdId||m)!==item.cdId);
+      const wl=(state.movedToWantlist||[]).filter(m=>(m.cdId||m)!==item._fromCdId);
       ghSaveState({movedToCollection:col,movedToWantlist:wl},state._sha).then(sha=>{
-        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
-        else setSyncStatus("error");
+        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}else setSyncStatus("error");
       });
     });
   },[]);
+
   const moveToWantlist=useCallback((item)=>{
     const wantId=item._originalId||`WL-${String(ALL_WANTLIST.length+1).padStart(4,"0")}`;
-    const newItem={...item,wantId,_fromCdId:item.cdId,_photoId:item._photoId||item.cdId,_originalId:item._originalId||item.cdId};
+    const newItem={...item,wantId,_fromCdId:item.cdId,_photoId:item._photoId||item.cdId,_originalId:item._originalId||item.cdId,recentlyAdded:null};
     delete newItem.cdId;
     setCds(prev=>prev.filter(c=>c.cdId!==item.cdId));
     setWantlistState(prev=>[...prev,newItem]);
@@ -1737,30 +1196,9 @@ function App(){
       const wl=[...(state.movedToWantlist||[])];
       const entry={cdId:item.cdId,wantId,photoId:item._photoId||item.cdId,originalId:item._originalId||item.cdId};
       if(!wl.find(m=>m.cdId===item.cdId)) wl.push(entry);
-      const col=(state.movedToCollection||[]).filter(m=>(m.wantId||m)!==item.wantId);
+      const col=(state.movedToCollection||[]).filter(m=>(m.wantId||m)!==item._fromWantId);
       ghSaveState({movedToCollection:col,movedToWantlist:wl},state._sha).then(sha=>{
-        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
-        else setSyncStatus("error");
-      });
-    });
-  },[]);
-  const moveToCollection=useCallback((item)=>{
-    const cdId=item._originalId||`CD-${String(ALL_CDS.length+1).padStart(4,"0")}`;
-    const newCd={...item,cdId,_fromWantId:item.wantId,_photoId:item._photoId||item.wantId,_originalId:item._originalId||item.wantId,recentlyAdded:Date.now()};
-    delete newCd.wantId;
-    setWantlistState(prev=>prev.filter(c=>c.wantId!==item.wantId));
-    setCds(prev=>[...prev,newCd]);
-    setSelected(null);
-    setSyncStatus("saving");
-    ghGetState().then(state=>{
-      if(!state) return setSyncStatus("error");
-      const col=[...(state.movedToCollection||[])];
-      const entry={wantId:item.wantId,cdId,photoId:item._photoId||item.wantId,originalId:item._originalId||item.wantId};
-      if(!col.find(m=>m.wantId===item.wantId)) col.push(entry);
-      const wl=(state.movedToWantlist||[]).filter(m=>(m.cdId||m)!==item.cdId);
-      ghSaveState({movedToCollection:col,movedToWantlist:wl},state._sha).then(sha=>{
-        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
-        else setSyncStatus("error");
+        if(sha){ghShaRef.current=sha;setSyncStatus("idle");}else setSyncStatus("error");
       });
     });
   },[]);
@@ -1796,7 +1234,7 @@ function App(){
                 [`${withPhotos}/${cds.length}`,t.withPhotos,"#4ade80"],
                 [`€${fmt(totVal)}`,t.totalValue,"#fbbf24"],
               ].map(([val,lbl,col])=>h("span",{key:lbl,style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"var(--text5)"}},
-                h("span",{style:{color:col}},lbl===t.totalValue&&!isAdminState?"—":val)," ",lbl))
+                h("span",{style:{color:col}},lbl===t.totalValue&&!isAdmin?"—":val)," ",lbl))
             )
           ),
           h("div",{style:{display:"flex",gap:8,alignItems:"center",marginTop:4}},
@@ -1805,25 +1243,11 @@ function App(){
               h("option",{value:"en"},"🇬🇧 EN"),
               h("option",{value:"es"},"🇦🇷 ES")
             ),
-            syncStatus==="saving"&&h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:4}},
-              h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1s infinite"}}),
-              "saving..."),
+            syncStatus==="saving"&&h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:4}},h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1s infinite"}}),h("span",null,"saving...")),
             syncStatus==="error"&&h("div",{style:{fontSize:"0.62rem",color:"#f87171",fontFamily:"'DM Mono',monospace"}},"sync ✗"),
-            h("button",{onClick:toggleTheme,title:theme==="dark"?"Light mode":"Dark mode",
-              style:{background:"transparent",border:"1px solid var(--border2)",borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1,color:"var(--text3)"}},
-              theme==="dark"?"☀️":"🌙"),
-            h("button",{onClick:handleLock,title:isAdminState?"Exit admin":"Admin",
-              style:{background:isAdminState?"var(--bg2)":"var(--bg2)",border:`1px solid ${isAdminState?"#4ade8066":"var(--border2)"}`,borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1}},
-              isAdminState?"🔓":"🔒"),
-            syncStatus==="saving"&&h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:4}},h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1s infinite"}}),h("span",null,"saving...")),
-            syncStatus==="error"&&h("div",{style:{fontSize:"0.62rem",color:"#f87171",fontFamily:"'DM Mono',monospace"}},"sync error"),
             h("button",{onClick:toggleTheme,title:theme==="dark"?"Light mode":"Dark mode",style:{background:"transparent",border:"1px solid var(--border2)",borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1,color:"var(--text3)"}},theme==="dark"?"☀️":"🌙"),
-            h("button",{onClick:handleLock,title:isAdminState?"Exit admin":"Admin",style:{background:isAdminState?"var(--bg2)":"var(--bg2)",border:`1px solid ${isAdminState?"#4ade8066":"var(--border2)"}`,borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1}},isAdminState?"🔓":"🔒"),
-            syncStatus==="saving"&&h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:4}},h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1s infinite"}}),h("span",null,"saving...")),
-            syncStatus==="error"&&h("div",{style:{fontSize:"0.62rem",color:"#f87171",fontFamily:"'DM Mono',monospace"}},"sync error"),
-            h("button",{onClick:toggleTheme,title:theme==="dark"?"Light mode":"Dark mode",style:{background:"transparent",border:"1px solid var(--border2)",borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1,color:"var(--text3)"}},theme==="dark"?"☀️":"🌙"),
-            h("button",{onClick:handleLock,title:isAdminState?"Exit admin":"Admin",style:{background:isAdminState?"var(--bg2)":"var(--bg2)",border:`1px solid ${isAdminState?"#4ade8066":"var(--border2)"}`,borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1}},isAdminState?"🔓":"🔒"),
-            (tab==="collection")&&isAdminState&&h("button",{onClick:()=>setModal("add"),
+            h("button",{onClick:handleLock,title:isAdmin2?"Exit admin":"Admin",style:{background:isAdmin2?"#1e2a1e":"var(--bg2)",border:`1px solid ${isAdmin2?"#4ade8066":"var(--border2)"}`,borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1}},isAdmin2?"🔓":"🔒"),
+            (tab==="collection")&&isAdmin&&h("button",{onClick:()=>setModal("add"),
               style:{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",color:"white",
                 borderRadius:8,padding:"9px 16px",cursor:"pointer",fontFamily:"'DM Mono',monospace",
                 fontSize:"0.75rem",fontWeight:600,letterSpacing:"0.05em",
@@ -1854,10 +1278,9 @@ function App(){
             h("div",{style:{fontSize:"2rem",animation:"pulse 1s infinite"}},"◉"),
             h("div",{style:{fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",color:"var(--text5)"}},"Loading collection..."))
         :tab==="wantlist"
-        ?h("div",{style:{maxWidth:1500,margin:"0 auto",padding:"20px 24px"}},
-            h(WantlistTree,{items:search?wantlistState.filter(cd=>{const q=search.toLowerCase();return cd.artist.toLowerCase().includes(q)||cd.album.toLowerCase().includes(q)||(cd.label||"").toLowerCase().includes(q)||(cd.wantId||"").toLowerCase().includes(q);}):wantlistState,onSelect:setSelected}))
+        ?h(WantlistTree,{items:search?wantlistState.filter(cd=>{const q=search.toLowerCase();return cd.artist.toLowerCase().includes(q)||cd.album.toLowerCase().includes(q)||(cd.label||"").toLowerCase().includes(q)||(cd.wantId||"").toLowerCase().includes(q);}):wantlistState,onSelect:setSelected})
         :tab==="statistics"
-        ?isAdminState?h("div",{style:{display:"flex",flexDirection:"column",gap:16,maxWidth:1500,margin:"0 auto",padding:"20px 24px"}},h(CollectionVsWantlist,{cds,wantlist:wantlistState}),h("div",{style:{height:1,background:"var(--border)",margin:"8px 0"}}),h(StatsTab,{cds})):h("div",{style:{textAlign:"center",padding:80,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},h("div",{style:{fontSize:"2rem",marginBottom:12}},"🔒"),h("div",null,"Admin access required"))
+        ?isAdmin2?h("div",{style:{display:"flex",flexDirection:"column",gap:16}},h(CollectionVsWantlist,{cds,wantlist:wantlistState}),h("div",{style:{height:1,background:"var(--border)",margin:"8px 0"}}),h(StatsTab,{cds})):h("div",{style:{textAlign:"center",padding:80,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},h("div",{style:{fontSize:"2rem",marginBottom:12}},"🔒"),h("div",null,"Admin access required"))
         :h(TreeView,{cds:filtered,onSelect:setSelected})
     ),
 
@@ -1869,9 +1292,8 @@ function App(){
       onEdit:handleEdit,
       onMoveToCollection:selected.wantId?moveToCollection:null,
       onMoveToWantlist:selected.cdId&&!selected.wantId?moveToWantlist:null,
-      adminMode:isAdminState,
-      currentLang:lang}),
-    showAdminModal&&h(AdminModal,{onSuccess:()=>{setIsAdminState(true);isAdmin=true;setShowAdminModal(false);},onClose:()=>setShowAdminModal(false)}),
+      adminMode:isAdmin2,currentLang:lang}),
+    showAdminModal&&h(AdminModal,{onSuccess:()=>{setIsAdmin2(true);isAdmin=true;setShowAdminModal(false);},onClose:()=>setShowAdminModal(false)}),
     modal&&h(CDModal,{cd:modal==="add"?null:modal,onSave:saveCd,onClose:()=>setModal(null)})
   );
 }
