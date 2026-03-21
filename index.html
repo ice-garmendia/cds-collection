@@ -591,6 +591,138 @@ function TreeView({cds,onSelect}){
   );
 }
 
+
+// ── COLLECTION vs WANTLIST CHARTS ─────────────────────────
+function CollectionVsWantlist({cds,wantlist}){
+  const SINGLES_CATS=["CD3","CD5","CD5 Enhanced"];
+  const normCat=c=>{const b=c.genre.replace(" · Live","");return SINGLES_CATS.includes(b)?"Singles":b;};
+
+  // By artist
+  const artists=["Queen","Freddie Mercury","Brian May","Roger Taylor","The Cross","Smile","Queen+"];
+  const byArtist=artists.map(a=>({
+    artist:a,
+    collection:cds.filter(c=>c.artist===a).length,
+    wantlist:wantlist.filter(c=>c.artist===a).length,
+  })).filter(r=>r.collection>0||r.wantlist>0);
+
+  // By category
+  const allCats=[...new Set([...cds,...wantlist].map(normCat))].sort();
+  const byCat=allCats.map(cat=>({
+    cat,
+    collection:cds.filter(c=>normCat(c)===cat).length,
+    wantlist:wantlist.filter(c=>normCat(c)===cat).length,
+  })).filter(r=>r.collection>0||r.wantlist>0);
+
+  const maxArtist=Math.max(...byArtist.map(r=>r.collection+r.wantlist));
+  const maxCat=Math.max(...byCat.map(r=>r.collection+r.wantlist));
+
+  const colColor="#6366f1";
+  const wlColor="#f59e0b";
+
+  function StackedBar({collection,wantlist,max,color}){
+    const total=collection+wantlist;
+    const colPct=(collection/max)*100;
+    const wlPct=(wantlist/max)*100;
+    return h("div",{style:{flex:1,height:22,background:"var(--bg4)",borderRadius:4,overflow:"hidden",display:"flex"}},
+      collection>0&&h("div",{style:{width:`${colPct}%`,background:colColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,minWidth:collection>0?20:0,transition:"width 0.6s"}},
+        h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},collection>5?collection:"")
+      ),
+      wantlist>0&&h("div",{style:{width:`${wlPct}%`,background:wlColor,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,minWidth:wantlist>0?20:0,transition:"width 0.6s"}},
+        h("span",{style:{fontSize:"0.6rem",color:"white",fontWeight:600,whiteSpace:"nowrap"}},wantlist>5?wantlist:"")
+      )
+    );
+  }
+
+  const totalCol=cds.length;
+  const totalWl=wantlist.length;
+  const grand=totalCol+totalWl;
+
+  return h("div",{style:{display:"flex",flexDirection:"column",gap:16}},
+    h(CollectionVsWantlist,{cds,wantlist:ALL_WANTLIST}),
+    h("div",{style:{height:1,background:"var(--border)",margin:"8px 0"}}),
+
+    // Header KPIs
+    h("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}},
+      h("div",{style:{background:"var(--bg2)",border:`1px solid ${colColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},
+        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:colColor}},totalCol),
+        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"In collection"),
+        h("div",{style:{fontSize:"0.72rem",color:colColor,marginTop:4}},`${((totalCol/grand)*100).toFixed(1)}% of total`)
+      ),
+      h("div",{style:{background:"var(--bg2)",border:`1px solid ${wlColor}44`,borderRadius:10,padding:"16px",textAlign:"center"}},
+        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:wlColor}},totalWl),
+        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"On wantlist"),
+        h("div",{style:{fontSize:"0.72rem",color:wlColor,marginTop:4}},`${((totalWl/grand)*100).toFixed(1)}% of total`)
+      ),
+      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:10,padding:"16px",textAlign:"center"}},
+        h("div",{style:{fontSize:"1.8rem",fontWeight:900,fontFamily:"'Playfair Display',serif",color:"var(--text)"}},grand),
+        h("div",{style:{fontSize:"0.62rem",color:"var(--text4)",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em"}},"Total universe"),
+        h("div",{style:{fontSize:"0.72rem",color:"var(--text5)",marginTop:4}},"Collection + Wantlist")
+      )
+    ),
+
+    // Overall donut
+    h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
+      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
+        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"Overall split"),
+        h(DonutChart,{data:{"Collection":totalCol,"Wantlist":totalWl},colors:[colColor,wlColor]})
+      ),
+
+      // By category stacked
+      h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
+        h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By category"),
+        h("div",{style:{display:"flex",gap:12,marginBottom:12}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+            h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),
+            h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
+          h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+            h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),
+            h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))
+        ),
+        h("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          ...byCat.map(({cat,collection,wantlist})=>
+            h("div",{key:cat,style:{display:"flex",alignItems:"center",gap:10}},
+              h("div",{style:{width:90,fontSize:"0.68rem",color:"var(--text3)",textAlign:"right",flexShrink:0}},cat),
+              h(StackedBar,{collection,wantlist,max:maxCat})
+            )
+          )
+        )
+      )
+    ),
+
+    // By artist stacked bar
+    h("div",{style:{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:12,padding:"20px 24px"}},
+      h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:16}},"By artist — collection vs wantlist"),
+      h("div",{style:{display:"flex",gap:12,marginBottom:14}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+          h("div",{style:{width:10,height:10,borderRadius:2,background:colColor}}),
+          h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Collection")),
+        h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+          h("div",{style:{width:10,height:10,borderRadius:2,background:wlColor}}),
+          h("span",{style:{fontSize:"0.65rem",color:"var(--text4)"}},"Wantlist"))
+      ),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        ...byArtist.map(({artist,collection,wantlist})=>{
+          const c=ac(artist);
+          const total=collection+wantlist;
+          const colPct=total>0?(collection/total*100).toFixed(0):0;
+          return h("div",{key:artist,style:{display:"flex",alignItems:"center",gap:10}},
+            h("div",{style:{width:120,fontSize:"0.72rem",color:c,textAlign:"right",flexShrink:0,fontWeight:600}},artist),
+            h("div",{style:{flex:1,height:26,background:"var(--bg4)",borderRadius:6,overflow:"hidden",display:"flex"}},
+              collection>0&&h("div",{style:{width:`${(collection/(maxArtist))*100}%`,background:colColor,display:"flex",alignItems:"center",justifyContent:"center",transition:"width 0.6s"}},
+                h("span",{style:{fontSize:"0.65rem",color:"white",fontWeight:700}},collection)
+              ),
+              wantlist>0&&h("div",{style:{width:`${(wantlist/(maxArtist))*100}%`,background:wlColor,display:"flex",alignItems:"center",justifyContent:"center",transition:"width 0.6s"}},
+                h("span",{style:{fontSize:"0.65rem",color:"white",fontWeight:700}},wantlist)
+              )
+            ),
+            h("div",{style:{fontSize:"0.65rem",color:"var(--text5)",minWidth:40,textAlign:"right"}},`${colPct}% ✓`)
+          );
+        })
+      )
+    )
+  );
+}
+
 // ── STATS ─────────────────────────────────────────────────
 function groupBy(arr,key){return arr.reduce((a,i)=>{const k=i[key]||"—";a[k]=(a[k]||0)+1;return a;},{});}
 function groupByVal(arr,key){return arr.reduce((a,i)=>{const k=i[key]||"—";a[k]=(a[k]||0)+(i.estimatedValue||0);return a;},{});}
