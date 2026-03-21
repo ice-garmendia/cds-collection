@@ -24,6 +24,7 @@ select option{background:var(--select-bg)}
 .tree-row:hover{filter:brightness(1.08)}
 body.light .tree-row:hover{filter:brightness(0.96)}
 @keyframes fadeIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 .popup-anim{animation:fadeIn 0.18s ease}
 </style>
 </head>
@@ -106,6 +107,50 @@ const T = {
 var t = T.en;
 var isAdmin = false;
 const ADMIN_HASH="228438f954eb282b13e2be03fa38f9873f1f75707edacdc175830a48867fb856";
+
+// ── GITHUB SYNC (via GitHub Action — no token in code) ────
+const GH_REPO = "ice-garmendia/cds-collection";
+const GH_STATE = "data/state.json";
+
+async function ghGetState() {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_STATE}`,{
+      headers:{"Accept":"application/vnd.github.v3+json"}
+    });
+    if(!r.ok) return null;
+    const d = await r.json();
+    const state = JSON.parse(atob(d.content.replace(/\n/g,"")));
+    state._sha = d.sha;
+    return state;
+  } catch(e) { return null; }
+}
+
+async function ghSaveState(state, sha) {
+  try {
+    const payload = {
+      ref: "main",
+      inputs: {
+        state: btoa(unescape(encodeURIComponent(JSON.stringify({
+          movedToCollection: state.movedToCollection,
+          movedToWantlist: state.movedToWantlist,
+          lastUpdated: new Date().toISOString()
+        },null,2)))),
+        sha: sha
+      }
+    };
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/save-state.yml/dispatches`,{
+      method:"POST",
+      headers:{"Accept":"application/vnd.github.v3+json","Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    return r.status===204?"ok":null;
+  } catch(e) { return null; }
+}
+
+async function ghGetSha() {
+  const state = await ghGetState();
+  return state?._sha || null;
+}
 async function checkPassword(pwd){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pwd));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("")===ADMIN_HASH;}
 
 const CAT_ICONS={
@@ -1116,24 +1161,101 @@ function App(){
     setCds(prev=>prev.filter(c=>c.cdId!==item.cdId));
     setWantlistState(prev=>{
       const newId=`WL-${String(prev.length+1).padStart(4,"0")}`;
-      const newItem={...item,wantId:newId,recentlyAdded:null};
+      const newItem={...item,wantId:newId,recentlyAdded:null,_fromCdId:item.cdId};
       delete newItem.cdId;
       return [...prev,newItem];
     });
     setSelected(null);
+    // Save to GitHub
+    setSyncStatus("saving");
+    ghGetState().then(state=>{
+      if(!state) return setSyncStatus("error");
+      const wl=[...(state.movedToWantlist||[])];
+      if(!wl.includes(item.cdId)) wl.push(item.cdId);
+      // Remove from movedToCollection if it was there
+      const moved=(state.movedToCollection||[]).filter(id=>id!==item.wantId);
+      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(ok=>{
+        if(ok){setSyncStatus("idle");}
+        else setSyncStatus("error");
+      });
+    });
   },[]);
   const moveToCollection=useCallback((item)=>{
     setWantlistState(prev=>prev.filter(c=>c.wantId!==item.wantId));
     setCds(prev=>{
       const newId=`CD-${String(prev.length+1).padStart(4,"0")}`;
-      const newCd={...item,cdId:newId,photos:item.photos||[],recentlyAdded:Date.now()};
+      const newCd={...item,cdId:newId,photos:item.photos||[],recentlyAdded:Date.now(),_fromWantId:item.wantId};
       delete newCd.wantId;
       return [...prev,newCd];
     });
     setSelected(null);
+    // Save to GitHub
+    setSyncStatus("saving");
+    ghGetState().then(state=>{
+      if(!state) return setSyncStatus("error");
+      const moved=[...(state.movedToCollection||[])];
+      if(!moved.includes(item.wantId)) moved.push(item.wantId);
+      // Remove from movedToWantlist if it was there
+      const wl=(state.movedToWantlist||[]).filter(id=>id!==item.cdId);
+      ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(ok=>{
+        if(ok){setSyncStatus("idle");}
+        else setSyncStatus("error");
+      });
+    });
   },[]);
   // On load check URL param
-  useEffect(()=>{const p=new URLSearchParams(window.location.search);const id=p.get("cd");if(id){const cd=ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);};},[]);
+  // State ref for GitHub sha
+  const ghShaRef = React.useRef(null);
+  const [syncStatus,setSyncStatus]=useState("idle"); // idle | loading | saving | error
+
+  useEffect(()=>{
+    // Load URL param
+    const p=new URLSearchParams(window.location.search);
+    const id=p.get("cd");
+    if(id){const cd=ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);}
+
+    // Load GitHub state
+    setSyncStatus("loading");
+    ghGetState().then(state=>{
+      if(!state){setSyncStatus("error");return;}
+      ghShaRef.current = state._sha;
+      setSyncStatus("idle");
+
+      // Apply movedToCollection
+      if(state.movedToCollection?.length){
+        state.movedToCollection.forEach(wantId=>{
+          const item = ALL_WANTLIST.find(c=>c.wantId===wantId);
+          if(item){
+            setCds(prev=>{
+              if(prev.find(c=>c._fromWantId===wantId)) return prev;
+              const newId=`CD-${String(prev.length+1).padStart(4,"0")}`;
+              const newCd={...item,cdId:newId,photos:item.photos||[],_fromWantId:wantId};
+              delete newCd.wantId;
+              return [...prev,newCd];
+            });
+            setWantlistState(prev=>prev.filter(c=>c.wantId!==wantId));
+          }
+        });
+      }
+
+      // Apply movedToWantlist
+      if(state.movedToWantlist?.length){
+        state.movedToWantlist.forEach(cdId=>{
+          const item = ALL_CDS.find(c=>c.cdId===cdId);
+          if(item){
+            setWantlistState(prev=>{
+              if(prev.find(c=>c._fromCdId===cdId)) return prev;
+              const newId=`WL-${String(prev.length+1).padStart(4,"0")}`;
+              const newItem={...item,wantId:newId,_fromCdId:cdId};
+              delete newItem.cdId;
+              return [...prev,newItem];
+            });
+            setCds(prev=>prev.filter(c=>c.cdId!==cdId));
+          }
+        });
+      }
+    });
+  },[]);
   t = T[lang];
   const [cds,setCds]=useState(ALL_CDS);
   const [tab,setTab]=useState("collection");
@@ -1203,6 +1325,11 @@ function App(){
             h("button",{onClick:toggleTheme,title:theme==="dark"?"Light mode":"Dark mode",
               style:{background:"transparent",border:"1px solid var(--border2)",borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1,color:"var(--text3)"}},
               theme==="dark"?"☀️":"🌙"),
+            syncStatus==="saving"&&h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace",display:"flex",alignItems:"center",gap:4}},
+              h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#f59e0b",animation:"pulse 1s infinite"}}),
+              "saving..."),
+            syncStatus==="error"&&h("div",{style:{fontSize:"0.62rem",color:"#f87171",fontFamily:"'DM Mono',monospace"}},"sync error"),
+            syncStatus==="loading"&&h("div",{style:{fontSize:"0.62rem",color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},"syncing..."),
             h("button",{onClick:handleLock,title:isAdmin?"Exit admin":"Admin",
               style:{background:isAdmin?"var(--bg2)":"var(--bg2)",border:`1px solid ${isAdmin?"#4ade8066":"var(--border2)"}`,borderRadius:6,padding:"7px 10px",cursor:"pointer",fontSize:"1rem",transition:"all 0.2s",lineHeight:1}},
               isAdmin?"🔓":"🔒"),
