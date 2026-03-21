@@ -112,34 +112,17 @@ const ADMIN_HASH="228438f954eb282b13e2be03fa38f9873f1f75707edacdc175830a48867fb8
 const GH_REPO = "ice-garmendia/cds-collection";
 const GH_STATE = "data/state.json";
 
-// Pre-load state synchronously before React renders
-function ghLoadStateSync() {
-  try {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", `https://api.github.com/repos/${GH_REPO}/contents/${GH_STATE}`, false);
-    xhr.setRequestHeader("Accept", "application/vnd.github.v3+json");
-    xhr.send();
-    if(xhr.status !== 200) return null;
-    const d = JSON.parse(xhr.responseText);
-    const state = JSON.parse(atob(d.content.replace(/\n/g,"")));
-    state._sha = d.sha;
-    return state;
-  } catch(e) { return null; }
-}
-
-// Apply state to compute initial arrays before first render
-const _preloadedState = ghLoadStateSync();
-function computeInitialArrays() {
+// Apply GitHub state to compute initial arrays
+function applyStateToArrays(state) {
   let initCds = [...ALL_CDS];
   let initWl  = [...ALL_WANTLIST];
-  if(!_preloadedState) return {initCds, initWl, sha: null};
-  const sha = _preloadedState._sha;
+  if(!state) return {initCds, initWl, sha: null};
 
-  (_preloadedState.movedToCollection||[]).forEach(entry=>{
-    const wantId   = entry.wantId||entry;
-    const cdId     = entry.originalId||entry.cdId||null;
-    const photoId  = entry.photoId||wantId;
-    const item     = ALL_WANTLIST.find(c=>c.wantId===wantId);
+  (state.movedToCollection||[]).forEach(entry=>{
+    const wantId  = entry.wantId||entry;
+    const cdId    = entry.originalId||entry.cdId||null;
+    const photoId = entry.photoId||wantId;
+    const item    = ALL_WANTLIST.find(c=>c.wantId===wantId);
     if(item && !initCds.find(c=>c._fromWantId===wantId)){
       const newId = cdId||`CD-${String(initCds.length+1).padStart(4,"0")}`;
       const newCd = {...item,cdId:newId,photos:item.photos||[],_fromWantId:wantId,_photoId:photoId,_originalId:wantId};
@@ -149,7 +132,7 @@ function computeInitialArrays() {
     }
   });
 
-  (_preloadedState.movedToWantlist||[]).forEach(entry=>{
+  (state.movedToWantlist||[]).forEach(entry=>{
     const cdId    = entry.cdId||entry;
     const wantId  = entry.originalId||entry.wantId||null;
     const photoId = entry.photoId||cdId;
@@ -163,9 +146,8 @@ function computeInitialArrays() {
     }
   });
 
-  return {initCds, initWl, sha};
+  return {initCds, initWl, sha: state._sha};
 }
-const {initCds: _initCds, initWl: _initWl, sha: _initSha} = computeInitialArrays();
 
 async function ghGetState() {
   try {
@@ -1265,12 +1247,13 @@ function AdminModal({onSuccess,onClose}){
 // ── APP ───────────────────────────────────────────────────
 function App(){
   const [theme,setTheme]=useState("dark");
+  const [appReady,setAppReady]=useState(false);
   const toggleTheme=()=>{const next=theme==="dark"?"light":"dark";setTheme(next);document.body.className=next;};
   const [lang,setLang]=useState("en");
   const [isAdmin,setIsAdmin]=useState(false);
   const [showAdminModal,setShowAdminModal]=useState(false);
   const handleLock=()=>{if(isAdmin){setIsAdmin(false);isAdmin=false;}else{setShowAdminModal(true);}};
-  const [wantlistState,setWantlistState]=useState(_initWl);
+  const [wantlistState,setWantlistState]=useState(ALL_WANTLIST);
   const moveToWantlist=useCallback((item)=>{
     setCds(prev=>prev.filter(c=>c.cdId!==item.cdId));
     setWantlistState(prev=>{
@@ -1322,7 +1305,7 @@ function App(){
   },[]);
   // On load check URL param
   // State ref for GitHub sha
-  const ghShaRef = React.useRef(_initSha);
+  const ghShaRef = React.useRef(null);
   const [syncStatus,setSyncStatus]=useState("idle"); // idle | loading | saving | error
 
   useEffect(()=>{
@@ -1331,11 +1314,23 @@ function App(){
     const id=p.get("cd");
     if(id){const cd=ALL_CDS.find(c=>c.cdId===id);if(cd)setSelected(cd);}
 
-    // State already applied synchronously via _preloadedState
-    setSyncStatus("idle");
+    // Load GitHub state and apply before showing app
+    ghGetState().then(state=>{
+      if(state){
+        ghShaRef.current = state._sha;
+        const {initCds, initWl} = applyStateToArrays(state);
+        setCds(initCds);
+        setWantlistState(initWl);
+      }
+      setAppReady(true);
+      setSyncStatus("idle");
+    }).catch(()=>{
+      setAppReady(true);
+      setSyncStatus("idle");
+    });
   },[]);
   t = T[lang];
-  const [cds,setCds]=useState(_initCds);
+  const [cds,setCds]=useState(ALL_CDS);
   const [tab,setTab]=useState("collection");
   const [search,setSearch]=useState("");
   const [modal,setModal]=useState(null);
@@ -1437,7 +1432,12 @@ function App(){
 
     // Content
     h("div",{style:{maxWidth:1500,margin:"0 auto",padding:"20px 24px"}},
-      tab==="wantlist"
+      !appReady
+        ?h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"60vh",flexDirection:"column",gap:16}},
+            h("div",{style:{fontSize:"2rem",animation:"pulse 1s infinite"}},"◉"),
+            h("div",{style:{fontFamily:"'DM Mono',monospace",fontSize:"0.72rem",color:"var(--text5)"}},"Loading collection...")
+          )
+        :tab==="wantlist"
         ?h("div",{style:{maxWidth:1500,margin:"0 auto",padding:"20px 24px"}},
             h(WantlistTree,{items:search?wantlistState.filter(cd=>{const q=search.toLowerCase();return cd.artist.toLowerCase().includes(q)||cd.album.toLowerCase().includes(q)||(cd.label||"").toLowerCase().includes(q)||(cd.wantId||"").toLowerCase().includes(q);}):wantlistState,onSelect:setSelected})
           )
