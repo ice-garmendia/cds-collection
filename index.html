@@ -1227,9 +1227,10 @@ function App(){
     ghGetState().then(state=>{
       if(!state) return setSyncStatus("error");
       const wl=[...(state.movedToWantlist||[])];
-      if(!wl.includes(item.cdId)) wl.push(item.cdId);
+      const wlEntry={cdId:item.cdId,wantId:item.wantId,photoId:item._photoId||item.cdId};
+      if(!wl.find(m=>m.cdId===item.cdId)) wl.push(wlEntry);
       // Remove from movedToCollection if it was there
-      const moved=(state.movedToCollection||[]).filter(id=>id!==item.wantId);
+      const moved=(state.movedToCollection||[]).filter(m=>(m.wantId||m)!==item.wantId);
       ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(sha=>{
         if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
         else setSyncStatus("error");
@@ -1250,9 +1251,11 @@ function App(){
     ghGetState().then(state=>{
       if(!state) return setSyncStatus("error");
       const moved=[...(state.movedToCollection||[])];
-      if(!moved.includes(item.wantId)) moved.push(item.wantId);
+      // Store {wantId, cdId, photoId} so we can restore exactly
+      const newEntry={wantId:item.wantId,cdId:item.cdId,photoId:item._photoId||item.wantId};
+      if(!moved.find(m=>m.wantId===item.wantId)) moved.push(newEntry);
       // Remove from movedToWantlist if it was there
-      const wl=(state.movedToWantlist||[]).filter(id=>id!==item.cdId);
+      const wl=(state.movedToWantlist||[]).filter(id=>(id.cdId||id)!==item.cdId);
       ghSaveState({movedToCollection:moved,movedToWantlist:wl},state._sha).then(sha=>{
         if(sha){ghShaRef.current=sha;setSyncStatus("idle");}
         else setSyncStatus("error");
@@ -1279,13 +1282,16 @@ function App(){
 
       // Apply movedToCollection
       if(state.movedToCollection?.length){
-        state.movedToCollection.forEach(wantId=>{
+        state.movedToCollection.forEach(entry=>{
+          const wantId=entry.wantId||entry;
+          const restoredCdId=entry.cdId||null;
+          const photoId=entry.photoId||wantId;
           const item = ALL_WANTLIST.find(c=>c.wantId===wantId);
           if(item){
             setCds(prev=>{
               if(prev.find(c=>c._fromWantId===wantId)) return prev;
-              const newId=`CD-${String(prev.length+1).padStart(4,"0")}`;
-              const newCd={...item,cdId:newId,photos:item.photos||[],_fromWantId:wantId};
+              const newId=restoredCdId||`CD-${String(prev.length+1).padStart(4,"0")}`;
+              const newCd={...item,cdId:newId,photos:item.photos||[],_fromWantId:wantId,_photoId:photoId};
               delete newCd.wantId;
               return [...prev,newCd];
             });
@@ -1296,13 +1302,16 @@ function App(){
 
       // Apply movedToWantlist
       if(state.movedToWantlist?.length){
-        state.movedToWantlist.forEach(cdId=>{
+        state.movedToWantlist.forEach(entry=>{
+          const cdId=entry.cdId||entry;
+          const restoredWantId=entry.wantId||null;
+          const photoId=entry.photoId||cdId;
           const item = ALL_CDS.find(c=>c.cdId===cdId);
           if(item){
             setWantlistState(prev=>{
               if(prev.find(c=>c._fromCdId===cdId)) return prev;
-              const newId=`WL-${String(prev.length+1).padStart(4,"0")}`;
-              const newItem={...item,wantId:newId,_fromCdId:cdId};
+              const newId=restoredWantId||`WL-${String(prev.length+1).padStart(4,"0")}`;
+              const newItem={...item,wantId:newId,_fromCdId:cdId,_photoId:photoId};
               delete newItem.cdId;
               return [...prev,newItem];
             });
