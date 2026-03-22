@@ -507,8 +507,8 @@ function TreeView({cds,onSelect}){
     h("div",{style:{display:"flex",gap:20,padding:"6px 0 14px",borderBottom:"1px solid var(--border)",marginBottom:8,flexWrap:"wrap"}},
       h("span",{style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"var(--text5)"}},
         h("span",{style:{color:"var(--accent)"}},cds.length)," ",t.records),
-      h("span",{style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"var(--text5)"}},
-        h("span",{style:{color:"var(--gold)"}},`€${fmt(totVal)}`)," ",t.totalValue)
+      isAdmin&&h("span",{style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"var(--text5)"}},
+        h("span",{style:{color:"var(--gold)"}},`€${fmt(totVal)}`)," ",t.totalValue),
     ),
 
     // Artist rows
@@ -1252,7 +1252,7 @@ function App(){
                 [variants,t.variants,"#ec4899"],
                 [promos,t.promos,"#f59e0b"],
                 [`${withPhotos}/${cds.length}`,t.withPhotos,"#4ade80"],
-                [`€${fmt(totVal)}`,t.totalValue,"#fbbf24"],
+                ...(isAdmin?[[`€${fmt(totVal)}`,t.totalValue,"#fbbf24"]]:[]),
               ].map(([val,lbl,col])=>h("span",{key:lbl,style:{fontFamily:"'DM Mono',monospace",fontSize:"0.68rem",color:"var(--text5)"}},
                 h("span",{style:{color:col}},lbl===t.totalValue&&!isAdmin?"—":val)," ",lbl))
             )
